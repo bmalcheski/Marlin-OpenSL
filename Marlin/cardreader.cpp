@@ -1,8 +1,6 @@
 #include "Marlin.h"
 #include "cardreader.h"
-#include "ultralcd.h"
 #include "stepper.h"
-#include "temperature.h"
 #include "language.h"
 
 #ifdef SDSUPPORT
@@ -277,7 +275,6 @@ void CardReader::openFile(char* name,bool read)
       sdpos = 0;
       
       SERIAL_PROTOCOLLNPGM(MSG_SD_FILE_SELECTED);
-      LCD_MESSAGE(fname);
     }
     else
     {
@@ -299,7 +296,6 @@ void CardReader::openFile(char* name,bool read)
       saving = true;
       SERIAL_PROTOCOLPGM(MSG_SD_WRITE_TO_FILE);
       SERIAL_PROTOCOLLN(name);
-      LCD_MESSAGE(fname);
     }
   }
   
@@ -531,6 +527,5 @@ void CardReader::printingHasFinished()
    //finishAndDisableSteppers();
    enquecommand(SD_FINISHED_RELEASECOMMAND);
  }
- autotempShutdown();
 }
 #endif //SDSUPPORT

@@ -60,6 +60,7 @@ typedef struct {
   unsigned long final_rate;                          // The minimal rate at exit
   unsigned long acceleration_st;                     // acceleration steps/sec^2
   unsigned long fan_speed;
+  unsigned long laser_power;
   volatile char busy;
 } block_t;
 

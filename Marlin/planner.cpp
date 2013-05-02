@@ -54,8 +54,6 @@
 #include "Marlin.h"
 #include "planner.h"
 #include "stepper.h"
-#include "temperature.h"
-#include "ultralcd.h"
 #include "language.h"
 
 //===========================================================================
@@ -81,13 +79,6 @@ static float previous_speed[4]; // Speed of previous path line segment
 static float previous_nominal_speed; // Nominal speed of previous path line segment
 
 extern volatile int extrudemultiply; // Sets extrude multiply factor (in percent)
-
-#ifdef AUTOTEMP
-float autotemp_max=250;
-float autotemp_min=210;
-float autotemp_factor=0.1;
-bool autotemp_enabled=false;
-#endif
 
 //===========================================================================
 //=================semi-private variables, used in inline  functions    =====
@@ -390,58 +381,13 @@ void plan_init() {
   previous_nominal_speed = 0.0;
 }
 
-
-
-
-#ifdef AUTOTEMP
-void getHighESpeed()
-{
-  static float oldt=0;
-  if(!autotemp_enabled){
-    return;
-  }
-  if(degTargetHotend0()+2<autotemp_min) {  //probably temperature set to zero.
-    return; //do nothing
-  }
-
-  float high=0.0;
-  uint8_t block_index = block_buffer_tail;
-
-  while(block_index != block_buffer_head) {
-    if((block_buffer[block_index].steps_x != 0) ||
-      (block_buffer[block_index].steps_y != 0) ||
-      (block_buffer[block_index].steps_z != 0)) {
-      float se=(float(block_buffer[block_index].steps_e)/float(block_buffer[block_index].step_event_count))*block_buffer[block_index].nominal_speed;
-      //se; mm/sec;
-      if(se>high)
-      {
-        high=se;
-      }
-    }
-    block_index = (block_index+1) & (BLOCK_BUFFER_SIZE - 1);
-  }
-
-  float g=autotemp_min+high*autotemp_factor;
-  float t=g;
-  if(t<autotemp_min)
-    t=autotemp_min;
-  if(t>autotemp_max)
-    t=autotemp_max;
-  if(oldt>t)
-  {
-    t=AUTOTEMP_OLDWEIGHT*oldt+(1-AUTOTEMP_OLDWEIGHT)*t;
-  }
-  oldt=t;
-  setTargetHotend0(t);
-}
-#endif
-
 void check_axes_activity() {
   unsigned char x_active = 0;
   unsigned char y_active = 0;  
   unsigned char z_active = 0;
   unsigned char e_active = 0;
   unsigned char fan_speed = 0;
+  unsigned char laser_power = 0;
   unsigned char tail_fan_speed = 0;
   block_t *block;
 
@@ -455,6 +401,7 @@ void check_axes_activity() {
       if(block->steps_z != 0) z_active++;
       if(block->steps_e != 0) e_active++;
       if(block->fan_speed != 0) fan_speed++;
+      if(block->laser_power != 0) laser_power++;
       block_index = (block_index+1) & (BLOCK_BUFFER_SIZE - 1);
     }
   }
@@ -462,6 +409,12 @@ void check_axes_activity() {
 #if FAN_PIN > -1
     if (FanSpeed != 0){
       analogWrite(FAN_PIN,FanSpeed); // If buffer is empty use current fan speed
+    }
+#endif
+
+#if LASER_PIN > -1
+    if (LaserPower != 0){
+      analogWrite(LASER_PIN,LaserPower); // If buffer is empty use current Laser Power
     }
 #endif
   }
@@ -482,8 +435,17 @@ void check_axes_activity() {
     analogWrite(FAN_PIN,tail_fan_speed);
   }
 #endif
-#ifdef AUTOTEMP
-  getHighESpeed();
+
+#if LASER_PIN > -1
+  if((LaserPower == 0) && (laser_power ==0)) 
+  {
+   analogWrite(LASER_PIN,0);
+  }
+  
+  if(LaserPower != 0)
+  {
+   analogWrite(LASER_PIN,LaserPower);
+  }
 #endif
 }
 
@@ -500,9 +462,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   // If the buffer is full: good! That means we are well ahead of the robot. 
   // Rest here until there is room in the buffer.
   while(block_buffer_tail == next_buffer_head) { 
-    manage_heater(); 
-    manage_inactivity(); 
-    LCD_STATUS;
+    manage_inactivity();
   }
 
   // The target position of the tool in absolute steps
@@ -513,25 +473,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   target[Y_AXIS] = lround(y*axis_steps_per_unit[Y_AXIS]);
   target[Z_AXIS] = lround(z*axis_steps_per_unit[Z_AXIS]);     
   target[E_AXIS] = lround(e*axis_steps_per_unit[E_AXIS]);
-
-#ifdef PREVENT_DANGEROUS_EXTRUDE
-  if(target[E_AXIS]!=position[E_AXIS])
-    if(degHotend(active_extruder)<EXTRUDE_MINTEMP && !allow_cold_extrude)
-    {
-      position[E_AXIS]=target[E_AXIS]; //behave as if the move really took place, but ignore E part
-      SERIAL_ECHO_START;
-      SERIAL_ECHOLNPGM(MSG_ERR_COLD_EXTRUDE_STOP);
-    }
-#ifdef PREVENT_LENGTHY_EXTRUDE
-  if(labs(target[E_AXIS]-position[E_AXIS])>axis_steps_per_unit[E_AXIS]*EXTRUDE_MAXLENGTH)
-  {
-    position[E_AXIS]=target[E_AXIS]; //behave as if the move really took place, but ignore E part
-    SERIAL_ECHO_START;
-    SERIAL_ECHOLNPGM(MSG_ERR_LONG_EXTRUDE_STOP);
-  }
-#endif
-#endif
-
+  
   // Prepare to set up new block
   block_t *block = &block_buffer[block_buffer_head];
 
@@ -553,7 +495,8 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   };
 
   block->fan_speed = FanSpeed;
-
+  block->laser_power = LaserPower;
+  
   // Compute direction bits for this block 
   block->direction_bits = 0;
   if (target[X_AXIS] < position[X_AXIS]) { 

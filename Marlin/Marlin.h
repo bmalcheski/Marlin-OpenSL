@@ -200,6 +200,7 @@ extern float add_homeing[3];
 extern float min_pos[3];
 extern float max_pos[3];
 extern unsigned char FanSpeed;
+extern unsigned char LaserPower;
 
 // Handling multiple extruders pins
 extern uint8_t active_extruder;

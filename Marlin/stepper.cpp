@@ -24,18 +24,20 @@
 #include "Marlin.h"
 #include "stepper.h"
 #include "planner.h"
-#include "temperature.h"
-#include "ultralcd.h"
 #include "language.h"
 #include "speed_lookuptable.h"
 
-
+#include <SPI.h>
 
 //===========================================================================
 //=============================public variables  ============================
 //===========================================================================
 block_t *current_block;  // A pointer to the block currently being traced
 
+volatile unsigned long Galvo_WorldXPosition;
+volatile unsigned long Galvo_WorldYPosition;
+volatile unsigned short Galvo_XPosition;
+volatile unsigned short Galvo_YPosition;
 
 //===========================================================================
 //=============================private variables ============================
@@ -324,101 +326,19 @@ ISR(TIMER1_COMPA_vect)
 
     // Set direction en check limit switches
     if ((out_bits & (1<<X_AXIS)) != 0) {   // stepping along -X axis
-      #if !defined COREXY  //NOT COREXY
-      WRITE(X_DIR_PIN, INVERT_X_DIR);
-      #endif
       count_direction[X_AXIS]=-1;
-      CHECK_ENDSTOPS
-      {
-        #if X_MIN_PIN > -1
-          bool x_min_endstop=(READ(X_MIN_PIN) != X_ENDSTOPS_INVERTING);
-          if(x_min_endstop && old_x_min_endstop && (current_block->steps_x > 0)) {
-            endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
-            endstop_x_hit=true;
-            step_events_completed = current_block->step_event_count;
-          }
-          old_x_min_endstop = x_min_endstop;
-        #endif
-      }
     }
     else { // +direction 
-      #if !defined COREXY  //NOT COREXY
-      WRITE(X_DIR_PIN,!INVERT_X_DIR);
-      #endif
-      
       count_direction[X_AXIS]=1;
-      CHECK_ENDSTOPS 
-      {
-        #if X_MAX_PIN > -1
-          bool x_max_endstop=(READ(X_MAX_PIN) != X_ENDSTOPS_INVERTING);
-          if(x_max_endstop && old_x_max_endstop && (current_block->steps_x > 0)){
-            endstops_trigsteps[X_AXIS] = count_position[X_AXIS];
-            endstop_x_hit=true;
-            step_events_completed = current_block->step_event_count;
-          }
-          old_x_max_endstop = x_max_endstop;
-        #endif
-      }
     }
 
     if ((out_bits & (1<<Y_AXIS)) != 0) {   // -direction
-      #if !defined COREXY  //NOT COREXY
-      WRITE(Y_DIR_PIN,INVERT_Y_DIR);
-      #endif
       count_direction[Y_AXIS]=-1;
-      CHECK_ENDSTOPS
-      {
-        #if Y_MIN_PIN > -1
-          bool y_min_endstop=(READ(Y_MIN_PIN) != Y_ENDSTOPS_INVERTING);
-          if(y_min_endstop && old_y_min_endstop && (current_block->steps_y > 0)) {
-            endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
-            endstop_y_hit=true;
-            step_events_completed = current_block->step_event_count;
-          }
-          old_y_min_endstop = y_min_endstop;
-        #endif
-      }
     }
     else { // +direction
-      #if !defined COREXY  //NOT COREXY
-    WRITE(Y_DIR_PIN,!INVERT_Y_DIR);
-      #endif
       count_direction[Y_AXIS]=1;
-      CHECK_ENDSTOPS
-      {
-        #if Y_MAX_PIN > -1
-          bool y_max_endstop=(READ(Y_MAX_PIN) != Y_ENDSTOPS_INVERTING);
-          if(y_max_endstop && old_y_max_endstop && (current_block->steps_y > 0)){
-            endstops_trigsteps[Y_AXIS] = count_position[Y_AXIS];
-            endstop_y_hit=true;
-            step_events_completed = current_block->step_event_count;
-          }
-          old_y_max_endstop = y_max_endstop;
-        #endif
-      }
     }
 
-    
-    #ifdef COREXY  //coreXY kinematics defined
-      if((current_block->steps_x >= current_block->steps_y)&&((out_bits & (1<<X_AXIS)) == 0)){  //+X is major axis
-        WRITE(X_DIR_PIN, !INVERT_X_DIR);
-        WRITE(Y_DIR_PIN, !INVERT_Y_DIR);
-      }
-      if((current_block->steps_x >= current_block->steps_y)&&((out_bits & (1<<X_AXIS)) != 0)){  //-X is major axis
-        WRITE(X_DIR_PIN, INVERT_X_DIR);
-        WRITE(Y_DIR_PIN, INVERT_Y_DIR);
-      }      
-      if((current_block->steps_y > current_block->steps_x)&&((out_bits & (1<<Y_AXIS)) == 0)){  //+Y is major axis
-        WRITE(X_DIR_PIN, !INVERT_X_DIR);
-        WRITE(Y_DIR_PIN, INVERT_Y_DIR);
-      }        
-      if((current_block->steps_y > current_block->steps_x)&&((out_bits & (1<<Y_AXIS)) != 0)){  //-Y is major axis
-        WRITE(X_DIR_PIN, INVERT_X_DIR);
-        WRITE(Y_DIR_PIN, !INVERT_Y_DIR);
-      }  
-    #endif //coreXY
-    
-    
     if ((out_bits & (1<<Z_AXIS)) != 0) {   // -direction
       WRITE(Z_DIR_PIN,INVERT_Z_DIR);
       
@@ -496,18 +416,16 @@ ISR(TIMER1_COMPA_vect)
       #if !defined COREXY      
       counter_x += current_block->steps_x;
       if (counter_x > 0) {
-          WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN);
         counter_x -= current_block->step_event_count;
         count_position[X_AXIS]+=count_direction[X_AXIS];   
-          WRITE(X_STEP_PIN, INVERT_X_STEP_PIN);
+        update_X_galvo(count_direction[X_AXIS]);
       }
 
       counter_y += current_block->steps_y;
       if (counter_y > 0) {
-          WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN);
         counter_y -= current_block->step_event_count;
-        count_position[Y_AXIS]+=count_direction[Y_AXIS];
-          WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
+        count_position[Y_AXIS]+=count_direction[Y_AXIS]; 
+        update_Y_galvo(count_direction[Y_AXIS]);
       }
       #endif
   
@@ -516,45 +434,37 @@ ISR(TIMER1_COMPA_vect)
         counter_y += current_block->steps_y;
         
         if ((counter_x > 0)&&!(counter_y>0)){  //X step only
-          WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN);
-          WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN);
           counter_x -= current_block->step_event_count; 
-          count_position[X_AXIS]+=count_direction[X_AXIS];         
-          WRITE(X_STEP_PIN, INVERT_X_STEP_PIN);
-          WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
+          count_position[X_AXIS]+=count_direction[X_AXIS];   
+          update_X_galvo(count_direction[X_AXIS]);
+          
         }
         
         if (!(counter_x > 0)&&(counter_y>0)){  //Y step only
-          WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN);
-          WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN);
           counter_y -= current_block->step_event_count; 
           count_position[Y_AXIS]+=count_direction[Y_AXIS];
-          WRITE(X_STEP_PIN, INVERT_X_STEP_PIN);
-          WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
+          update_X_galvo(count_direction[X_AXIS]);
+          update_Y_galvo(count_direction[Y_AXIS]);
         }        
         
         if ((counter_x > 0)&&(counter_y>0)){  //step in both axes
           if (((out_bits & (1<<X_AXIS)) == 0)^((out_bits & (1<<Y_AXIS)) == 0)){  //X and Y in different directions
-            WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN);
-            counter_x -= current_block->step_event_count;             
-            WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
+            counter_x -= current_block->step_event_count;  
             step_wait();
             count_position[X_AXIS]+=count_direction[X_AXIS];
             count_position[Y_AXIS]+=count_direction[Y_AXIS];
-            WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN);
+            update_X_galvo(count_direction[X_AXIS]);
+            update_Y_galvo(count_direction[Y_AXIS]);
             counter_y -= current_block->step_event_count;
-            WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
           }
           else{  //X and Y in same direction
-            WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN);
-            counter_x -= current_block->step_event_count;             
-            WRITE(X_STEP_PIN, INVERT_X_STEP_PIN) ;
+            counter_x -= current_block->step_event_count;    
             step_wait();
             count_position[X_AXIS]+=count_direction[X_AXIS];
             count_position[Y_AXIS]+=count_direction[Y_AXIS];
-            WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN); 
+            update_X_galvo(count_direction[X_AXIS]);
+            update_Y_galvo(count_direction[Y_AXIS]);
             counter_y -= current_block->step_event_count;    
-            WRITE(X_STEP_PIN, INVERT_X_STEP_PIN);        
           }
         }
       #endif //corexy
@@ -715,12 +625,6 @@ ISR(TIMER1_COMPA_vect)
 void st_init()
 {
   //Initialize Dir Pins
-  #if X_DIR_PIN > -1
-    SET_OUTPUT(X_DIR_PIN);
-  #endif
-  #if Y_DIR_PIN > -1 
-    SET_OUTPUT(Y_DIR_PIN);
-  #endif
   #if Z_DIR_PIN > -1 
     SET_OUTPUT(Z_DIR_PIN);
 
@@ -739,15 +643,6 @@ void st_init()
   #endif
 
   //Initialize Enable Pins - steppers default to disabled.
-
-  #if (X_ENABLE_PIN > -1)
-    SET_OUTPUT(X_ENABLE_PIN);
-    if(!X_ENABLE_ON) WRITE(X_ENABLE_PIN,HIGH);
-  #endif
-  #if (Y_ENABLE_PIN > -1)
-    SET_OUTPUT(Y_ENABLE_PIN);
-    if(!Y_ENABLE_ON) WRITE(Y_ENABLE_PIN,HIGH);
-  #endif
   #if (Z_ENABLE_PIN > -1)
     SET_OUTPUT(Z_ENABLE_PIN);
     if(!Z_ENABLE_ON) WRITE(Z_ENABLE_PIN,HIGH);
@@ -772,20 +667,6 @@ void st_init()
 
   //endstops and pullups
   
-    #if X_MIN_PIN > -1
-      SET_INPUT(X_MIN_PIN); 
-    #ifdef ENDSTOPPULLUP_XMIN
-      WRITE(X_MIN_PIN,HIGH);
-    #endif
-    #endif
-      
-    #if Y_MIN_PIN > -1
-      SET_INPUT(Y_MIN_PIN); 
-    #ifdef ENDSTOPPULLUP_YMIN
-      WRITE(Y_MIN_PIN,HIGH);
-    #endif
-    #endif
-  
     #if Z_MIN_PIN > -1
       SET_INPUT(Z_MIN_PIN); 
     #ifdef ENDSTOPPULLUP_ZMIN
@@ -793,20 +674,6 @@ void st_init()
     #endif
     #endif
       
-    #if X_MAX_PIN > -1
-      SET_INPUT(X_MAX_PIN); 
-    #ifdef ENDSTOPPULLUP_XMAX
-      WRITE(X_MAX_PIN,HIGH);
-    #endif
-    #endif
-      
-    #if Y_MAX_PIN > -1
-      SET_INPUT(Y_MAX_PIN); 
-    #ifdef ENDSTOPPULLUP_YMAX
-      WRITE(Y_MAX_PIN,HIGH);
-    #endif
-    #endif
-  
     #if Z_MAX_PIN > -1
       SET_INPUT(Z_MAX_PIN); 
     #ifdef ENDSTOPPULLUP_ZMAX
@@ -816,16 +683,6 @@ void st_init()
  
 
   //Initialize Step Pins
-  #if (X_STEP_PIN > -1) 
-    SET_OUTPUT(X_STEP_PIN);
-    WRITE(X_STEP_PIN,INVERT_X_STEP_PIN);
-    if(!X_ENABLE_ON) WRITE(X_ENABLE_PIN,HIGH);
-  #endif  
-  #if (Y_STEP_PIN > -1) 
-    SET_OUTPUT(Y_STEP_PIN);
-    WRITE(Y_STEP_PIN,INVERT_Y_STEP_PIN);
-    if(!Y_ENABLE_ON) WRITE(Y_ENABLE_PIN,HIGH);
-  #endif  
   #if (Z_STEP_PIN > -1) 
     SET_OUTPUT(Z_STEP_PIN);
     WRITE(Z_STEP_PIN,INVERT_Z_STEP_PIN);
@@ -898,10 +755,98 @@ void st_init()
 void st_synchronize()
 {
     while( blocks_queued()) {
-    manage_heater();
     manage_inactivity();
-    LCD_STATUS;
   }
+}
+
+void digitalPotWrite(int channel, int value) {
+  // take the SS pin low to select the chip:
+  digitalWrite(GALVO_SS_PIN,LOW);
+  //  send in the address and value via SPI:
+  SPI.transfer(channel);
+  SPI.transfer(value);
+  // take the SS pin high to de-select the chip:
+  digitalWrite(GALVO_SS_PIN,HIGH);
+}
+
+void update_X_galvo(int step_dir)
+{
+   Galvo_WorldXPosition+=step_dir;
+   if(Galvo_WorldXPosition > 0xFEFF)
+   {
+      Galvo_XPosition = 0xFEFF;
+   }
+   else if(Galvo_WorldXPosition <= 0)
+   {
+      Galvo_XPosition = 0x0000;
+   }
+   else
+   {
+      Galvo_XPosition = Galvo_WorldXPosition & 0XFFFF0000;
+   }   
+   
+   move_X_galvo(Galvo_XPosition);
+}
+
+void update_Y_galvo(int step_dir)
+{
+   Galvo_WorldYPosition+=step_dir;
+   if(Galvo_WorldYPosition > 0xFEFF)
+   {
+      Galvo_YPosition = 0xFEFF;
+   }
+   else if(Galvo_WorldYPosition <= 0)
+   {
+      Galvo_YPosition = 0x0000;
+   }
+   else
+   {
+      Galvo_YPosition = Galvo_WorldYPosition & 0XFFFF0000;
+   }   
+   
+   move_Y_galvo(Galvo_YPosition);
+}
+
+void move_galvos(unsigned short X, unsigned short Y)
+{
+  move_X_galvo(X);
+  move_Y_galvo(Y);
+}
+
+void move_X_galvo(unsigned short X)
+{
+  CRITICAL_SECTION_START;
+  char xHigh = X & 0xFF00;
+  char xLow  = X & 0x00FF;
+  
+  if(xHigh == 0xFF)
+  {
+     xHigh = 0xFE;
+     xLow = 0xFF;
+  }
+     
+  digitalPotWrite(4, xHigh);
+  digitalPotWrite(2, xHigh+1);
+  digitalPotWrite(6, xLow);
+    
+  CRITICAL_SECTION_END; 
+}
+
+void move_Y_galvo(unsigned short Y)
+{
+  CRITICAL_SECTION_START;
+  char yHigh = Y & 0xFF00;
+  char yLow  = Y & 0x00FF;
+  
+  if(yHigh == 0xFF)
+  {
+     yHigh = 0xFE;
+     yLow = 0xFF;
+  }  
+  digitalPotWrite(3, yHigh);
+  digitalPotWrite(1, yHigh+1);
+  digitalPotWrite(5, yLow);
+  CRITICAL_SECTION_END; 
 }
 
 void st_set_position(const long &x, const long &y, const long &z, const long &e)
@@ -933,7 +878,6 @@ long st_get_position(uint8_t axis)
 void finishAndDisableSteppers()
 {
   st_synchronize(); 
-  LCD_MESSAGEPGM(MSG_STEPPER_RELEASED);
   disable_x(); 
   disable_y(); 
   disable_z(); 
