@@ -782,7 +782,7 @@ void update_X_galvo(int step_dir)
    }
    else
    {
-      Galvo_XPosition = Galvo_WorldXPosition & 0XFFFF0000;
+      Galvo_XPosition = Galvo_WorldXPosition & 0x0000FFFF;
    }   
    
    move_X_galvo(Galvo_XPosition);
@@ -801,7 +801,7 @@ void update_Y_galvo(int step_dir)
    }
    else
    {
-      Galvo_YPosition = Galvo_WorldYPosition & 0XFFFF0000;
+      Galvo_YPosition = Galvo_WorldYPosition & 0X0000FFFF;
    }   
    
    move_Y_galvo(Galvo_YPosition);
