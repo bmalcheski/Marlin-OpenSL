@@ -1,19 +1,12 @@
-This version supports Printrboard and Panucatt ViKi (with Printrboard & RAMPS )
-last upstream merge 10/12 RC3-81-gbc27d80
-
-To enable ViKi support:
-1) uncomment #define PANUCATT_VIKI in Configuration.h
-2) download and install LiquidTWI2 http://blog.lincomatic.com/?tag=liquidtwi2
+OpenSL 1.0 Firmware, Heavily based on Marlin.
 
 WARNING: 
 --------
-THIS IS RELEASE CANDIDATE 2 FOR MARLIN 1.0.0
+FIRMWARE HEAVILY IN WORK FOR OPENSL 1.0 ELECTRONICS
 
 The configuration is now split in two files
 Configuration.h for the normal settings
 Configuration_adv.h for the advanced settings
-
-Gen7T is not supported.
 
 Quick Information
 ===================
@@ -29,6 +22,8 @@ Lampmaker, Bradley Feldman, and others...
 
 Features:
 
+*   Galvanometer Control through SPI Digi Pots
+*   Dual Z-Axis Support
 *   Interrupt based movement with real linear acceleration
 *   High steprate
 *   Look ahead (Keep the speed high when possible. High cornering speed)
@@ -44,8 +39,6 @@ Features:
 *   EEPROM storage of e.g. max-velocity, max-acceleration, and similar variables
 *   many small but handy things originating from bkubicek's fork.
 *   Arc support
-*   Temperature oversampling
-*   Dynamic Temperature setpointing aka "AutoTemp"
 *   Support for QTMarlin, a very beta GUI for PID-tuning and velocity-acceleration testing. https://github.com/bkubicek/QTMarlin
 *   Endstop trigger reporting to the host software.
 *   Updated sdcardlib
@@ -73,23 +66,6 @@ Slic3r can find curves that, although broken into segments, were ment to describ
 Marlin is able to print those arcs. The advantage is the firmware can choose the resolution,
 and can perform the arc with nearly constant velocity, resulting in a nice finish. 
 Also, less serial communication is needed.
-
-*Temperature Oversampling:*
-
-To reduce noise and make the PID-differential term more useful, 16 ADC conversion results are averaged.
-
-*AutoTemp:*
-
-If your gcode contains a wide spread of extruder velocities, or you realtime change the building speed, the temperature should be changed accordingly.
-Usually, higher speed requires higher temperature.
-This can now be performed by the AutoTemp function
-By calling M109 S<mintemp> T<maxtemp> F<factor> you enter the autotemp mode.
-
-You can leave it by calling M109 without any F.
-If active, the maximal extruder stepper rate of all buffered moves will be calculated, and named "maxerate" [steps/sec].
-The wanted temperature then will be set to t=tempmin+factor*maxerate, while being limited between tempmin and tempmax.
-If the target temperature is set manually or by gcode to a value less then tempmin, it will be kept without change.
-Ideally, your gcode can be completely free of temperature controls, apart from a M109 S T F in the start.gcode, and a M109 S0 in the end.gcode.
 
 *EEPROM:*
 
@@ -181,6 +157,10 @@ EEPROM:
 *   M501 - reads parameters from EEPROM (if you need reset them after you changed them temporarily).  
 *   M502 - reverts to the default "factory settings".  You still need to store them in EEPROM afterwards if you want to.
 *   M503 - print the current settings (from memory not from eeprom)
+
+LASER:
+*   M600 - Laser ON (S### to set Laser Power... e.g. M600 S255)
+*   M601 - Laser OFF
 
 MISC:
 *   M240 - Trigger a camera to take a photograph
