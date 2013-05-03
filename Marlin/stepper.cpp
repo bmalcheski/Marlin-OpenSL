@@ -825,9 +825,9 @@ void move_X_galvo(unsigned short X)
      xLow = 0xFF;
   }
      
-  digitalPotWrite(4, xHigh);
-  digitalPotWrite(2, xHigh+1);
-  digitalPotWrite(6, xLow);
+  digitalPotWrite(3, xHigh);
+  digitalPotWrite(1, xHigh+1);
+  digitalPotWrite(5, xLow);
     
   CRITICAL_SECTION_END; 
 }
@@ -843,9 +843,9 @@ void move_Y_galvo(unsigned short Y)
      yHigh = 0xFE;
      yLow = 0xFF;
   }  
-  digitalPotWrite(3, yHigh);
-  digitalPotWrite(1, yHigh+1);
-  digitalPotWrite(5, yLow);
+  digitalPotWrite(2, yHigh);
+  digitalPotWrite(0, yHigh+1);
+  digitalPotWrite(4, yLow);
   CRITICAL_SECTION_END; 
 }
 
