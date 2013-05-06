@@ -125,8 +125,8 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define HOMING_FEEDRATE {50*60, 50*60, 90, 90}  // set the homing speeds (mm/min)
 
 // default settings 
-
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {652.79, 652.79,4000,4000}  // default steps per unit for OpenSL
+#define XY_GALVO_SCALAR 10
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {65.279, 65.279,4000,4000}  // default steps per unit for OpenSL
 #define DEFAULT_MAX_FEEDRATE          {1000, 1000, 10, 10}    // (mm/sec)    
 #define DEFAULT_MAX_ACCELERATION      {9000,9000,2,2}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 

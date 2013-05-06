@@ -815,9 +815,8 @@ void move_galvos(unsigned short X, unsigned short Y)
 
 void move_X_galvo(unsigned short X)
 {
-  CRITICAL_SECTION_START;
-  char xHigh = ((X & 0xFF00) >> 8);
-  char xLow  = X & 0x00FF;
+  char xHigh = (((X*XY_GALVO_SCALAR) & 0xFF00) >> 8);
+  char xLow  = (X*XY_GALVO_SCALAR) & 0x00FF;
   
   if(xHigh == 0xFF)
   {
@@ -828,15 +827,12 @@ void move_X_galvo(unsigned short X)
   digitalPotWrite(1, xHigh);
   digitalPotWrite(3, xHigh+1);
   digitalPotWrite(5, xLow);
-    
-  CRITICAL_SECTION_END; 
 }
 
 void move_Y_galvo(unsigned short Y)
 {
-  CRITICAL_SECTION_START;
-  char yHigh = ((Y & 0xFF00) >> 8);
-  char yLow  = Y & 0x00FF;
+  char yHigh = ((Y*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
+  char yLow  = (Y*XY_GALVO_SCALAR)  & 0x00FF;
   
   if(yHigh == 0xFF)
   {
@@ -846,7 +842,6 @@ void move_Y_galvo(unsigned short Y)
   digitalPotWrite(0, yHigh);
   digitalPotWrite(2, yHigh+1);
   digitalPotWrite(4, yLow);
-  CRITICAL_SECTION_END; 
 }
 
 void st_set_position(const long &x, const long &y, const long &z, const long &e)
