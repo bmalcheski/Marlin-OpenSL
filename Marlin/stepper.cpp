@@ -815,8 +815,8 @@ void move_galvos(unsigned short X, unsigned short Y)
 
 void move_X_galvo(unsigned short X)
 {
-  char xHigh = (((X*XY_GALVO_SCALAR) & 0xFF00) >> 8);
-  char xLow  = (X*XY_GALVO_SCALAR) & 0x00FF;
+  unsigned char xHigh = (((X*XY_GALVO_SCALAR) & 0xFF00) >> 8);
+  unsigned char xLow  = (X*XY_GALVO_SCALAR) & 0x00FF;
   
   if(xHigh == 0xFF)
   {
@@ -831,8 +831,8 @@ void move_X_galvo(unsigned short X)
 
 void move_Y_galvo(unsigned short Y)
 {
-  char yHigh = ((Y*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
-  char yLow  = (Y*XY_GALVO_SCALAR)  & 0x00FF;
+  unsigned char yHigh = ((Y*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
+  unsigned char yLow  = (Y*XY_GALVO_SCALAR)  & 0x00FF;
   
   if(yHigh == 0xFF)
   {
