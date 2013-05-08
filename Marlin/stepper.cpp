@@ -824,9 +824,9 @@ void move_X_galvo(unsigned short X)
      xLow = 0xFF;
   }
      
-  digitalPotWrite(1, xHigh);
-  digitalPotWrite(3, xHigh+1);
-  digitalPotWrite(5, xLow);
+  digitalPotWrite(0, xHigh);
+  digitalPotWrite(2, xHigh+1);
+  digitalPotWrite(4, xLow);
 }
 
 void move_Y_galvo(unsigned short Y)
@@ -839,9 +839,9 @@ void move_Y_galvo(unsigned short Y)
      yHigh = 0xFE;
      yLow = 0xFF;
   }  
-  digitalPotWrite(0, yHigh);
-  digitalPotWrite(2, yHigh+1);
-  digitalPotWrite(4, yLow);
+  digitalPotWrite(1, yHigh);
+  digitalPotWrite(3, yHigh+1);
+  digitalPotWrite(5, yLow);
 }
 
 void st_set_position(const long &x, const long &y, const long &z, const long &e)
