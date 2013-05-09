@@ -74,6 +74,10 @@ void checkStepperErrors(); //Print errors detected by the stepper
 void finishAndDisableSteppers();
 
 extern block_t *current_block;  // A pointer to the block currently being traced
+extern unsigned long Galvo_WorldXPosition;
+extern unsigned long Galvo_WorldYPosition;
+extern unsigned short Galvo_XPosition;
+extern unsigned short Galvo_YPosition;
 
 void quickStop();
 #endif

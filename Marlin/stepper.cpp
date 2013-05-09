@@ -33,11 +33,10 @@
 //=============================public variables  ============================
 //===========================================================================
 block_t *current_block;  // A pointer to the block currently being traced
-
-volatile unsigned long Galvo_WorldXPosition;
-volatile unsigned long Galvo_WorldYPosition;
-volatile unsigned short Galvo_XPosition;
-volatile unsigned short Galvo_YPosition;
+unsigned long Galvo_WorldXPosition;
+unsigned long Galvo_WorldYPosition;
+unsigned short Galvo_XPosition;
+unsigned short Galvo_YPosition;
 
 //===========================================================================
 //=============================private variables ============================

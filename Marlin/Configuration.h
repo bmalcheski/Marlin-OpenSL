@@ -122,19 +122,19 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 //// MOVEMENT SETTINGS
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
-#define HOMING_FEEDRATE {50*60, 50*60, 90, 90}  // set the homing speeds (mm/min)
+#define HOMING_FEEDRATE {50*60, 50*60, 180, 180}  // set the homing speeds (mm/min)
 
 // default settings 
-#define XY_GALVO_SCALAR 10
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {65.279, 65.279,4000,4000}  // default steps per unit for OpenSL
-#define DEFAULT_MAX_FEEDRATE          {1000, 1000, 10, 10}    // (mm/sec)    
-#define DEFAULT_MAX_ACCELERATION      {9000,9000,2,2}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
+#define XY_GALVO_SCALAR 20
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {652.79/XY_GALVO_SCALAR, 652.79/XY_GALVO_SCALAR,4000,4000}  // default steps per unit for OpenSL
+#define DEFAULT_MAX_FEEDRATE          {4000, 4000, 10, 10}    // (mm/sec)    
+#define DEFAULT_MAX_ACCELERATION      {8000,8000,4,4}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
-#define DEFAULT_ACCELERATION          4000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves 3000 for steel bearings
-#define DEFAULT_RETRACT_ACCELERATION  4000    // X, Y, Z and E max acceleration in mm/s^2 for r retracts 3000 for steel bearings
+#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves 3000 for steel bearings
+#define DEFAULT_RETRACT_ACCELERATION  3000    // X, Y, Z and E max acceleration in mm/s^2 for r retracts 3000 for steel bearings
 
 // 
-#define DEFAULT_XYJERK                30.0    // (mm/sec) 20 for steel bearings
+#define DEFAULT_XYJERK                20.0    // (mm/sec) 20 for steel bearings
 #define DEFAULT_ZJERK                 0.4     // (mm/sec)
 #define DEFAULT_EJERK                 0.4    // (mm/sec)
 

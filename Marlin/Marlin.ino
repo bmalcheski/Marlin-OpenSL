@@ -118,18 +118,10 @@
 // M503 - print the current settings (from memory not from eeprom)
 // M600 - Laser on
 // M601 - Laser off
+// M602 - Galvo Debug
 // M999 - Restart after being stopped by error
 
 //Stepper Movement Variables
-
-//===========================================================================
-//=============================imported variables============================
-//===========================================================================
-extern volatile unsigned long Galvo_WorldXPosition;
-extern volatile unsigned long Galvo_WorldYPosition;
-extern volatile unsigned short Galvo_XPosition;
-extern volatile unsigned short Galvo_YPosition;
-  
 
 //===========================================================================
 //=============================public variables=============================
@@ -955,6 +947,17 @@ void process_commands()
         break;
       case 601: //601 Laser Off
         LaserPower = 0;
+        break;
+      case 602: // Galvo Debug
+        SERIAL_PROTOCOLPGM("GalvoW: (");
+        SERIAL_PROTOCOL(Galvo_WorldXPosition);
+        SERIAL_PROTOCOLPGM(",");
+        SERIAL_PROTOCOL(Galvo_WorldYPosition);
+        SERIAL_PROTOCOLPGM(") :: (");
+        SERIAL_PROTOCOL(Galvo_XPosition);
+        SERIAL_PROTOCOLPGM(",");      
+        SERIAL_PROTOCOL(Galvo_YPosition);
+        SERIAL_PROTOCOLPGM(")");      
         break;
     #endif //LASER_PIN
     
