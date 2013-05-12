@@ -829,8 +829,6 @@ void process_commands()
         enable_y(); 
         enable_z(); 
         enable_e0(); 
-        enable_e1(); 
-        enable_e2(); 
       break;
 
 #ifdef SDSUPPORT
@@ -1011,8 +1009,6 @@ void process_commands()
         {
           st_synchronize();
           disable_e0();
-          disable_e1();
-          disable_e2();
           finishAndDisableSteppers();
         }
         else
@@ -1021,11 +1017,9 @@ void process_commands()
           if(code_seen('X')) disable_x();
           if(code_seen('Y')) disable_y();
           if(code_seen('Z')) disable_z();
-          #if ((E0_ENABLE_PIN != X_ENABLE_PIN) && (E1_ENABLE_PIN != Y_ENABLE_PIN)) // Only enable on boards that have seperate ENABLE_PINS
+          #if ((LZ_ENABLE_PIN != X_ENABLE_PIN) && (E1_ENABLE_PIN != Y_ENABLE_PIN)) // Only enable on boards that have seperate ENABLE_PINS
             if(code_seen('E')) {
               disable_e0();
-              disable_e1();
-              disable_e2();
             }
           #endif 
         }
@@ -1330,7 +1324,8 @@ void ClearToSend()
 void get_coordinates()
 {
   bool seen[4]={false,false,false,false};
-  for(int8_t i=0; i < NUM_AXIS; i++) {
+  //X, Y, (Z, E)
+  for(int8_t i=0; i < 2; i++) {
     if(code_seen(axis_codes[i])) 
     {
       destination[i] = (float)code_value() + (axis_relative_modes[i] || relative_mode)*current_position[i];
@@ -1338,10 +1333,32 @@ void get_coordinates()
     }
     else destination[i] = current_position[i]; //Are these else lines really needed?
   }
+  if(code_seen('Z'))
+  {
+    float tmove = (float)code_value();
+    
+    //Left and Right Z Axis Move
+    destination[2] = tmove + (axis_relative_modes[2] || relative_mode)*current_position[2];
+    seen[2]=true;
+    destination[3] = tmove + (axis_relative_modes[3] || relative_mode)*current_position[3];
+    seen[3]=true;
+  }  
+  if(code_seen('R')) {
+    //Right Z Axis Move
+    destination[2] = (float)code_value() + (axis_relative_modes[2] || relative_mode)*current_position[2];
+    seen[2]=true;
+  }
+  if(code_seen('L'))
+  {
+    //Left Z Axis Move
+    destination[3] = (float)code_value() + (axis_relative_modes[3] || relative_mode)*current_position[3];
+    seen[3]=true;
+  }
   if(code_seen('F')) {
     next_feedrate = code_value();
     if(next_feedrate > 0.0) feedrate = next_feedrate;
   }
+  
   #ifdef FWRETRACT
   if(autoretract_enabled)
   if( !(seen[X_AXIS] || seen[Y_AXIS] || seen[Z_AXIS]) && seen[E_AXIS])
@@ -1499,8 +1516,6 @@ void manage_inactivity()
         disable_y();
         disable_z();
         disable_e0();
-        disable_e1();
-        disable_e2();
       }
     }
   }
@@ -1524,8 +1539,6 @@ void kill()
   disable_y();
   disable_z();
   disable_e0();
-  disable_e1();
-  disable_e2();
 
   cli(); // Stop interrupts
 

@@ -423,8 +423,6 @@ void check_axes_activity() {
   if((DISABLE_Z) && (z_active == 0)) disable_z();
   if((DISABLE_E) && (e_active == 0)) { 
     disable_e0();
-    disable_e1();
-    disable_e2(); 
   }
 #if FAN_PIN > -1
   if((FanSpeed == 0) && (fan_speed ==0)) {
@@ -523,9 +521,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
 
   // Enable all
   if(block->steps_e != 0) { 
-    enable_e0();
-    enable_e1();
-    enable_e2(); 
+    enable_e0(); 
   }
 
   if (block->steps_e == 0) {

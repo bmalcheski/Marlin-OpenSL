@@ -29,15 +29,15 @@
 #define Y_MIN_PIN          -1
 #define Y_MAX_PIN          -1
 
-#define Z_STEP_PIN         34
-#define Z_DIR_PIN          32
-#define Z_ENABLE_PIN       33
+#define RZ_STEP_PIN         34
+#define RZ_DIR_PIN          32
+#define RZ_ENABLE_PIN       33
 #define Z_MIN_PIN          13
 #define Z_MAX_PIN          -1
 
-#define E0_STEP_PIN         16
-#define E0_DIR_PIN          35
-#define E0_ENABLE_PIN       17
+#define LZ_STEP_PIN         16
+#define LZ_DIR_PIN          35
+#define LZ_ENABLE_PIN       17
 
 #define FAN_PIN            15  // Fan
 
@@ -61,17 +61,7 @@
 #endif
 
 //List of pins which to ignore when asked to change by gcode, 0 and 1 are RX and TX, do not mess with those!
-#define _E0_PINS E0_STEP_PIN, E0_DIR_PIN, E0_ENABLE_PIN, 
-#if EXTRUDERS > 1
-  #define _E1_PINS E1_STEP_PIN, E1_DIR_PIN, E1_ENABLE_PIN, HEATER_1_PIN,
-#else
-  #define _E1_PINS
-#endif
-#if EXTRUDERS > 2
-  #define _E2_PINS E2_STEP_PIN, E2_DIR_PIN, E2_ENABLE_PIN, HEATER_2_PIN,
-#else
-  #define _E2_PINS
-#endif
+#define _E0_PINS LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN
 
 #ifdef DISABLE_MAX_ENDSTOPS
 #define X_MAX_PIN          -1
@@ -79,7 +69,8 @@
 #define Z_MAX_PIN          -1
 #endif
 
-#define SENSITIVE_PINS {0, 1, Z_STEP_PIN, Z_DIR_PIN, Z_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, PS_ON_PIN, \
-                        FAN_PIN, LASER_PIN,          \
-                        _E0_PINS _E1_PINS _E2_PINS }
+
+#define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, PS_ON_PIN, \
+                        FAN_PIN, LASER_PIN, \
+                        _E0_PINS }
 #endif

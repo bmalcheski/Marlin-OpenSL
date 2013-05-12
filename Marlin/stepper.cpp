@@ -339,11 +339,7 @@ ISR(TIMER1_COMPA_vect)
     }
 
     if ((out_bits & (1<<Z_AXIS)) != 0) {   // -direction
-      WRITE(Z_DIR_PIN,INVERT_Z_DIR);
-      
-	  #ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_DIR_PIN,INVERT_Z_DIR);
-      #endif
+      WRITE(RZ_DIR_PIN,INVERT_Z_DIR);
       
       count_direction[Z_AXIS]=-1;
       CHECK_ENDSTOPS
@@ -360,11 +356,7 @@ ISR(TIMER1_COMPA_vect)
       }
     }
     else { // +direction
-      WRITE(Z_DIR_PIN,!INVERT_Z_DIR);
-
-	  #ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_DIR_PIN,!INVERT_Z_DIR);
-      #endif
+      WRITE(RZ_DIR_PIN,!INVERT_Z_DIR);
 
       count_direction[Z_AXIS]=1;
       CHECK_ENDSTOPS
@@ -470,19 +462,12 @@ ISR(TIMER1_COMPA_vect)
 
       counter_z += current_block->steps_z;
       if (counter_z > 0) {
-        WRITE(Z_STEP_PIN, !INVERT_Z_STEP_PIN);
-        
-		#ifdef Z_DUAL_STEPPER_DRIVERS
-          WRITE(Z2_STEP_PIN, !INVERT_Z_STEP_PIN);
-        #endif
+        WRITE(RZ_STEP_PIN, !INVERT_Z_STEP_PIN);
         
         counter_z -= current_block->step_event_count;
         count_position[Z_AXIS]+=count_direction[Z_AXIS];
-        WRITE(Z_STEP_PIN, INVERT_Z_STEP_PIN);
+        WRITE(RZ_STEP_PIN, INVERT_Z_STEP_PIN);
         
-		#ifdef Z_DUAL_STEPPER_DRIVERS
-          WRITE(Z2_STEP_PIN, INVERT_Z_STEP_PIN);
-        #endif
       }
 
       #ifndef ADVANCE
@@ -575,48 +560,18 @@ ISR(TIMER1_COMPA_vect)
     // Set E direction (Depends on E direction + advance)
     for(unsigned char i=0; i<4;i++) {
       if (e_steps[0] != 0) {
-        WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
+        WRITE(LZ_STEP_PIN, INVERT_E_STEP_PIN);
         if (e_steps[0] < 0) {
-          WRITE(E0_DIR_PIN, INVERT_E0_DIR);
+          WRITE(LZ_DIR_PIN, INVERT_E0_DIR);
           e_steps[0]++;
-          WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(LZ_STEP_PIN, !INVERT_E_STEP_PIN);
         } 
         else if (e_steps[0] > 0) {
-          WRITE(E0_DIR_PIN, !INVERT_E0_DIR);
+          WRITE(LZ_DIR_PIN, !INVERT_E0_DIR);
           e_steps[0]--;
-          WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+          WRITE(LZ_STEP_PIN, !INVERT_E_STEP_PIN);
         }
       }
- #if EXTRUDERS > 1
-      if (e_steps[1] != 0) {
-        WRITE(E1_STEP_PIN, INVERT_E_STEP_PIN);
-        if (e_steps[1] < 0) {
-          WRITE(E1_DIR_PIN, INVERT_E1_DIR);
-          e_steps[1]++;
-          WRITE(E1_STEP_PIN, !INVERT_E_STEP_PIN);
-        } 
-        else if (e_steps[1] > 0) {
-          WRITE(E1_DIR_PIN, !INVERT_E1_DIR);
-          e_steps[1]--;
-          WRITE(E1_STEP_PIN, !INVERT_E_STEP_PIN);
-        }
-      }
- #endif
- #if EXTRUDERS > 2
-      if (e_steps[2] != 0) {
-        WRITE(E2_STEP_PIN, INVERT_E_STEP_PIN);
-        if (e_steps[2] < 0) {
-          WRITE(E2_DIR_PIN, INVERT_E2_DIR);
-          e_steps[2]++;
-          WRITE(E2_STEP_PIN, !INVERT_E_STEP_PIN);
-        } 
-        else if (e_steps[2] > 0) {
-          WRITE(E2_DIR_PIN, !INVERT_E2_DIR);
-          e_steps[2]--;
-          WRITE(E2_STEP_PIN, !INVERT_E_STEP_PIN);
-        }
-      }
- #endif
     }
   }
 #endif // ADVANCE
@@ -624,46 +579,23 @@ ISR(TIMER1_COMPA_vect)
 void st_init()
 {
   //Initialize Dir Pins
-  #if Z_DIR_PIN > -1 
-    SET_OUTPUT(Z_DIR_PIN);
-
-    #if defined(Z_DUAL_STEPPER_DRIVERS) && (Z2_DIR_PIN > -1)
-      SET_OUTPUT(Z2_DIR_PIN);
-    #endif
+  #if RZ_DIR_PIN > -1 
+    SET_OUTPUT(RZ_DIR_PIN);
   #endif
-  #if E0_DIR_PIN > -1 
-    SET_OUTPUT(E0_DIR_PIN);
-  #endif
-  #if defined(E1_DIR_PIN) && (E1_DIR_PIN > -1)
-    SET_OUTPUT(E1_DIR_PIN);
-  #endif
-  #if defined(E2_DIR_PIN) && (E2_DIR_PIN > -1)
-    SET_OUTPUT(E2_DIR_PIN);
+  #if LZ_DIR_PIN > -1 
+    SET_OUTPUT(LZ_DIR_PIN);
   #endif
 
   //Initialize Enable Pins - steppers default to disabled.
-  #if (Z_ENABLE_PIN > -1)
-    SET_OUTPUT(Z_ENABLE_PIN);
-    if(!Z_ENABLE_ON) WRITE(Z_ENABLE_PIN,HIGH);
-    
-    #if defined(Z_DUAL_STEPPER_DRIVERS) && (Z2_ENABLE_PIN > -1)
-      SET_OUTPUT(Z2_ENABLE_PIN);
-      if(!Z_ENABLE_ON) WRITE(Z2_ENABLE_PIN,HIGH);
-    #endif
+  #if (RZ_ENABLE_PIN > -1)
+    SET_OUTPUT(RZ_ENABLE_PIN);
+    if(!Z_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
   #endif
-  #if (E0_ENABLE_PIN > -1)
-    SET_OUTPUT(E0_ENABLE_PIN);
-    if(!E_ENABLE_ON) WRITE(E0_ENABLE_PIN,HIGH);
+  #if (LZ_ENABLE_PIN > -1)
+    SET_OUTPUT(LZ_ENABLE_PIN);
+    if(!E_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
   #endif
-  #if defined(E1_ENABLE_PIN) && (E1_ENABLE_PIN > -1)
-    SET_OUTPUT(E1_ENABLE_PIN);
-    if(!E_ENABLE_ON) WRITE(E1_ENABLE_PIN,HIGH);
-  #endif
-  #if defined(E2_ENABLE_PIN) && (E2_ENABLE_PIN > -1)
-    SET_OUTPUT(E2_ENABLE_PIN);
-    if(!E_ENABLE_ON) WRITE(E2_ENABLE_PIN,HIGH);
-  #endif
-
+  
   //endstops and pullups
   
     #if Z_MIN_PIN > -1
@@ -682,31 +614,16 @@ void st_init()
  
 
   //Initialize Step Pins
-  #if (Z_STEP_PIN > -1) 
-    SET_OUTPUT(Z_STEP_PIN);
-    WRITE(Z_STEP_PIN,INVERT_Z_STEP_PIN);
-    if(!Z_ENABLE_ON) WRITE(Z_ENABLE_PIN,HIGH);
+  #if (RZ_STEP_PIN > -1) 
+    SET_OUTPUT(RZ_STEP_PIN);
+    WRITE(RZ_STEP_PIN,INVERT_Z_STEP_PIN);
+    if(!Z_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
     
-    #if defined(Z_DUAL_STEPPER_DRIVERS) && (Z2_STEP_PIN > -1)
-      SET_OUTPUT(Z2_STEP_PIN);
-      WRITE(Z2_STEP_PIN,INVERT_Z_STEP_PIN);
-      if(!Z_ENABLE_ON) WRITE(Z2_ENABLE_PIN,HIGH);
-    #endif
   #endif  
-  #if (E0_STEP_PIN > -1) 
-    SET_OUTPUT(E0_STEP_PIN);
-    WRITE(E0_STEP_PIN,INVERT_E_STEP_PIN);
-    if(!E_ENABLE_ON) WRITE(E0_ENABLE_PIN,HIGH);
-  #endif  
-  #if defined(E1_STEP_PIN) && (E1_STEP_PIN > -1) 
-    SET_OUTPUT(E1_STEP_PIN);
-    WRITE(E1_STEP_PIN,INVERT_E_STEP_PIN);
-    if(!E_ENABLE_ON) WRITE(E1_ENABLE_PIN,HIGH);
-  #endif  
-  #if defined(E2_STEP_PIN) && (E2_STEP_PIN > -1) 
-    SET_OUTPUT(E2_STEP_PIN);
-    WRITE(E2_STEP_PIN,INVERT_E_STEP_PIN);
-    if(!E_ENABLE_ON) WRITE(E2_ENABLE_PIN,HIGH);
+  #if (LZ_STEP_PIN > -1) 
+    SET_OUTPUT(LZ_STEP_PIN);
+    WRITE(LZ_STEP_PIN,INVERT_E_STEP_PIN);
+    if(!E_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
   #endif  
 
   #ifdef CONTROLLERFAN_PIN
@@ -876,8 +793,6 @@ void finishAndDisableSteppers()
   disable_y(); 
   disable_z(); 
   disable_e0(); 
-  disable_e1(); 
-  disable_e2(); 
 }
 
 void quickStop()
