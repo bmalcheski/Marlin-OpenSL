@@ -78,8 +78,6 @@ long position[4];   //rescaled from extern when axis_steps_per_unit are changed 
 static float previous_speed[4]; // Speed of previous path line segment
 static float previous_nominal_speed; // Nominal speed of previous path line segment
 
-extern volatile int extrudemultiply; // Sets extrude multiply factor (in percent)
-
 //===========================================================================
 //=================semi-private variables, used in inline  functions    =====
 //===========================================================================
@@ -398,8 +396,8 @@ void check_axes_activity() {
       block = &block_buffer[block_index];
       if(block->steps_x != 0) x_active++;
       if(block->steps_y != 0) y_active++;
-      if(block->steps_z != 0) z_active++;
-      if(block->steps_e != 0) e_active++;
+      if(block->steps_rz != 0) z_active++;
+      if(block->steps_lz != 0) e_active++;
       if(block->fan_speed != 0) fan_speed++;
       if(block->laser_power != 0) laser_power++;
       block_index = (block_index+1) & (BLOCK_BUFFER_SIZE - 1);
@@ -420,9 +418,9 @@ void check_axes_activity() {
   }
   if((DISABLE_X) && (x_active == 0)) disable_x();
   if((DISABLE_Y) && (y_active == 0)) disable_y();
-  if((DISABLE_Z) && (z_active == 0)) disable_z();
-  if((DISABLE_E) && (e_active == 0)) { 
-    disable_e0();
+  if((DISABLE_RZ) && (z_active == 0)) disable_rz();
+  if((DISABLE_LZ) && (e_active == 0)) { 
+    disable_lz();
   }
 #if FAN_PIN > -1
   if((FanSpeed == 0) && (fan_speed ==0)) {
@@ -469,8 +467,8 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   long target[4];
   target[X_AXIS] = lround(x*axis_steps_per_unit[X_AXIS]);
   target[Y_AXIS] = lround(y*axis_steps_per_unit[Y_AXIS]);
-  target[Z_AXIS] = lround(z*axis_steps_per_unit[Z_AXIS]);     
-  target[E_AXIS] = lround(e*axis_steps_per_unit[E_AXIS]);
+  target[RZ_AXIS] = lround(z*axis_steps_per_unit[RZ_AXIS]);     
+  target[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);
   
   // Prepare to set up new block
   block_t *block = &block_buffer[block_buffer_head];
@@ -481,11 +479,9 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   // Number of steps for each axis
   block->steps_x = labs(target[X_AXIS]-position[X_AXIS]);
   block->steps_y = labs(target[Y_AXIS]-position[Y_AXIS]);
-  block->steps_z = labs(target[Z_AXIS]-position[Z_AXIS]);
-  block->steps_e = labs(target[E_AXIS]-position[E_AXIS]);
-  block->steps_e *= extrudemultiply;
-  block->steps_e /= 100;
-  block->step_event_count = max(block->steps_x, max(block->steps_y, max(block->steps_z, block->steps_e)));
+  block->steps_rz = labs(target[RZ_AXIS]-position[RZ_AXIS]);
+  block->steps_lz = labs(target[LZ_AXIS]-position[LZ_AXIS]);
+  block->step_event_count = max(block->steps_x, max(block->steps_y, max(block->steps_rz, block->steps_lz)));
 
   // Bail if this is a zero-length block
   if (block->step_event_count <= dropsegments) { 
@@ -503,11 +499,11 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   if (target[Y_AXIS] < position[Y_AXIS]) { 
     block->direction_bits |= (1<<Y_AXIS); 
   }
-  if (target[Z_AXIS] < position[Z_AXIS]) { 
-    block->direction_bits |= (1<<Z_AXIS); 
+  if (target[RZ_AXIS] < position[RZ_AXIS]) { 
+    block->direction_bits |= (1<<RZ_AXIS); 
   }
-  if (target[E_AXIS] < position[E_AXIS]) { 
-    block->direction_bits |= (1<<E_AXIS); 
+  if (target[LZ_AXIS] < position[LZ_AXIS]) { 
+    block->direction_bits |= (1<<LZ_AXIS); 
   }
 
   block->active_extruder = extruder;
@@ -516,15 +512,15 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   if(block->steps_x != 0) enable_x();
   if(block->steps_y != 0) enable_y();
 #ifndef Z_LATE_ENABLE
-  if(block->steps_z != 0) enable_z();
+  if(block->steps_rz != 0) enable_rz();
 #endif
 
   // Enable all
-  if(block->steps_e != 0) { 
-    enable_e0(); 
+  if(block->steps_lz != 0) { 
+    enable_lz(); 
   }
 
-  if (block->steps_e == 0) {
+  if (block->steps_lz == 0) {
     if(feed_rate<mintravelfeedrate) feed_rate=mintravelfeedrate;
   }
   else {
@@ -534,13 +530,13 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   float delta_mm[4];
   delta_mm[X_AXIS] = (target[X_AXIS]-position[X_AXIS])/axis_steps_per_unit[X_AXIS];
   delta_mm[Y_AXIS] = (target[Y_AXIS]-position[Y_AXIS])/axis_steps_per_unit[Y_AXIS];
-  delta_mm[Z_AXIS] = (target[Z_AXIS]-position[Z_AXIS])/axis_steps_per_unit[Z_AXIS];
-  delta_mm[E_AXIS] = ((target[E_AXIS]-position[E_AXIS])/axis_steps_per_unit[E_AXIS])*extrudemultiply/100.0;
-  if ( block->steps_x <=dropsegments && block->steps_y <=dropsegments && block->steps_z <=dropsegments ) {
-    block->millimeters = fabs(delta_mm[E_AXIS]);
+  delta_mm[RZ_AXIS] = (target[RZ_AXIS]-position[RZ_AXIS])/axis_steps_per_unit[RZ_AXIS];
+  delta_mm[LZ_AXIS] = (target[LZ_AXIS]-position[LZ_AXIS])/axis_steps_per_unit[LZ_AXIS];
+  if ( block->steps_x <=dropsegments && block->steps_y <=dropsegments && block->steps_rz <=dropsegments ) {
+    block->millimeters = fabs(delta_mm[LZ_AXIS]);
   } 
   else {
-    block->millimeters = sqrt(square(delta_mm[X_AXIS]) + square(delta_mm[Y_AXIS]) + square(delta_mm[Z_AXIS]));
+    block->millimeters = sqrt(square(delta_mm[X_AXIS]) + square(delta_mm[Y_AXIS]) + square(delta_mm[RZ_AXIS]));
   }
   float inverse_millimeters = 1.0/block->millimeters;  // Inverse millimeters to remove multiple divides 
 
@@ -619,7 +615,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
 
   // Compute and limit the acceleration rate for the trapezoid generator.  
   float steps_per_mm = block->step_event_count/block->millimeters;
-  if(block->steps_x == 0 && block->steps_y == 0 && block->steps_z == 0) {
+  if(block->steps_x == 0 && block->steps_y == 0 && block->steps_rz == 0) {
     block->acceleration_st = ceil(retract_acceleration * steps_per_mm); // convert to: acceleration steps/sec^2
   }
   else {
@@ -629,10 +625,10 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
       block->acceleration_st = axis_steps_per_sqr_second[X_AXIS];
     if(((float)block->acceleration_st * (float)block->steps_y / (float)block->step_event_count) > axis_steps_per_sqr_second[Y_AXIS])
       block->acceleration_st = axis_steps_per_sqr_second[Y_AXIS];
-    if(((float)block->acceleration_st * (float)block->steps_e / (float)block->step_event_count) > axis_steps_per_sqr_second[E_AXIS])
-      block->acceleration_st = axis_steps_per_sqr_second[E_AXIS];
-    if(((float)block->acceleration_st * (float)block->steps_z / (float)block->step_event_count ) > axis_steps_per_sqr_second[Z_AXIS])
-      block->acceleration_st = axis_steps_per_sqr_second[Z_AXIS];
+    if(((float)block->acceleration_st * (float)block->steps_lz / (float)block->step_event_count) > axis_steps_per_sqr_second[LZ_AXIS])
+      block->acceleration_st = axis_steps_per_sqr_second[LZ_AXIS];
+    if(((float)block->acceleration_st * (float)block->steps_rz / (float)block->step_event_count ) > axis_steps_per_sqr_second[RZ_AXIS])
+      block->acceleration_st = axis_steps_per_sqr_second[RZ_AXIS];
   }
   block->acceleration = block->acceleration_st / steps_per_mm;
   block->acceleration_rate = (long)((float)block->acceleration_st * 8.388608);
@@ -643,7 +639,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
 
   unit_vec[X_AXIS] = delta_mm[X_AXIS]*inverse_millimeters;
   unit_vec[Y_AXIS] = delta_mm[Y_AXIS]*inverse_millimeters;
-  unit_vec[Z_AXIS] = delta_mm[Z_AXIS]*inverse_millimeters;
+  unit_vec[RZ_AXIS] = delta_mm[RZ_AXIS]*inverse_millimeters;
 
   // Compute maximum allowable entry speed at junction by centripetal acceleration approximation.
   // Let a circle be tangent to both previous and current path line segments, where the junction
@@ -662,7 +658,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
     // NOTE: Max junction velocity is computed without sin() or acos() by trig half angle identity.
     double cos_theta = - previous_unit_vec[X_AXIS] * unit_vec[X_AXIS]
       - previous_unit_vec[Y_AXIS] * unit_vec[Y_AXIS]
-      - previous_unit_vec[Z_AXIS] * unit_vec[Z_AXIS] ;
+      - previous_unit_vec[RZ_AXIS] * unit_vec[RZ_AXIS] ;
 
     // Skip and use default max junction speed for 0 degree acute junction.
     if (cos_theta < 0.95) {
@@ -680,9 +676,9 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   // Start with a safe speed
   float vmax_junction = max_xy_jerk/2; 
   float vmax_junction_factor = 1.0; 
-  if(fabs(current_speed[Z_AXIS]) > max_z_jerk/2) 
+  if(fabs(current_speed[RZ_AXIS]) > max_z_jerk/2) 
     vmax_junction = min(vmax_junction, max_z_jerk/2);
-  if(fabs(current_speed[E_AXIS]) > max_e_jerk/2) 
+  if(fabs(current_speed[LZ_AXIS]) > max_e_jerk/2) 
     vmax_junction = min(vmax_junction, max_e_jerk/2);
   vmax_junction = min(vmax_junction, block->nominal_speed);
   float safe_speed = vmax_junction;
@@ -695,11 +691,11 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
     if (jerk > max_xy_jerk) {
       vmax_junction_factor = (max_xy_jerk/jerk);
     } 
-    if(fabs(current_speed[Z_AXIS] - previous_speed[Z_AXIS]) > max_z_jerk) {
-      vmax_junction_factor= min(vmax_junction_factor, (max_z_jerk/fabs(current_speed[Z_AXIS] - previous_speed[Z_AXIS])));
+    if(fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS]) > max_z_jerk) {
+      vmax_junction_factor= min(vmax_junction_factor, (max_z_jerk/fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS])));
     } 
-    if(fabs(current_speed[E_AXIS] - previous_speed[E_AXIS]) > max_e_jerk) {
-      vmax_junction_factor = min(vmax_junction_factor, (max_e_jerk/fabs(current_speed[E_AXIS] - previous_speed[E_AXIS])));
+    if(fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS]) > max_e_jerk) {
+      vmax_junction_factor = min(vmax_junction_factor, (max_e_jerk/fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS])));
     } 
     vmax_junction = min(previous_nominal_speed, vmax_junction * vmax_junction_factor); // Limit speed to max previous speed
   }
@@ -732,14 +728,14 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
 
 #ifdef ADVANCE
   // Calculate advance rate
-  if((block->steps_e == 0) || (block->steps_x == 0 && block->steps_y == 0 && block->steps_z == 0)) {
+  if((block->steps_lz == 0) || (block->steps_x == 0 && block->steps_y == 0 && block->steps_rz == 0)) {
     block->advance_rate = 0;
     block->advance = 0;
   }
   else {
     long acc_dist = estimate_acceleration_distance(0, block->nominal_rate, block->acceleration_st);
     float advance = (STEPS_PER_CUBIC_MM_E * EXTRUDER_ADVANCE_K) * 
-      (current_speed[E_AXIS] * current_speed[E_AXIS] * EXTRUTION_AREA * EXTRUTION_AREA)*256;
+      (current_speed[LZ_AXIS] * current_speed[LZ_AXIS] * EXTRUTION_AREA * EXTRUTION_AREA)*256;
     block->advance = advance;
     if(acc_dist == 0) {
       block->advance_rate = 0;
@@ -775,9 +771,9 @@ void plan_set_position(const float &x, const float &y, const float &z, const flo
 {
   position[X_AXIS] = lround(x*axis_steps_per_unit[X_AXIS]);
   position[Y_AXIS] = lround(y*axis_steps_per_unit[Y_AXIS]);
-  position[Z_AXIS] = lround(z*axis_steps_per_unit[Z_AXIS]);     
-  position[E_AXIS] = lround(e*axis_steps_per_unit[E_AXIS]);  
-  st_set_position(position[X_AXIS], position[Y_AXIS], position[Z_AXIS], position[E_AXIS]);
+  position[RZ_AXIS] = lround(z*axis_steps_per_unit[RZ_AXIS]);     
+  position[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);  
+  st_set_position(position[X_AXIS], position[Y_AXIS], position[RZ_AXIS], position[LZ_AXIS]);
   previous_nominal_speed = 0.0; // Resets planner junction speeds. Assumes start from rest.
   previous_speed[0] = 0.0;
   previous_speed[1] = 0.0;
@@ -787,8 +783,8 @@ void plan_set_position(const float &x, const float &y, const float &z, const flo
 
 void plan_set_e_position(const float &e)
 {
-  position[E_AXIS] = lround(e*axis_steps_per_unit[E_AXIS]);  
-  st_set_e_position(position[E_AXIS]);
+  position[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);  
+  st_set_e_position(position[LZ_AXIS]);
 }
 
 uint8_t movesplanned()

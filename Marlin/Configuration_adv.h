@@ -103,8 +103,8 @@
 //By default pololu step drivers require an active high signal. However, some high power drivers require an active low signal as step.
 #define INVERT_X_STEP_PIN false
 #define INVERT_Y_STEP_PIN false
-#define INVERT_Z_STEP_PIN false
-#define INVERT_E_STEP_PIN false
+#define INVERT_RZ_STEP_PIN false
+#define INVERT_LZ_STEP_PIN false
 
 //default stepper release if idle
 #define DEFAULT_STEPPER_DEACTIVE_TIME 60
@@ -161,7 +161,7 @@
   #define D_FILAMENT 2.85
   #define STEPS_MM_E 836
   #define EXTRUTION_AREA (0.25 * D_FILAMENT * D_FILAMENT * 3.14159)
-  #define STEPS_PER_CUBIC_MM_E (axis_steps_per_unit[E_AXIS]/ EXTRUTION_AREA)
+  #define STEPS_PER_CUBIC_MM_E (axis_steps_per_unit[LZ_AXIS]/ EXTRUTION_AREA)
 
 #endif // ADVANCE
 

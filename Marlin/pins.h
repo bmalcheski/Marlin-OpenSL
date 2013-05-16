@@ -61,7 +61,7 @@
 #endif
 
 //List of pins which to ignore when asked to change by gcode, 0 and 1 are RX and TX, do not mess with those!
-#define _E0_PINS LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN
+#define _LZ_PINS LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN
 
 #ifdef DISABLE_MAX_ENDSTOPS
 #define X_MAX_PIN          -1
@@ -72,5 +72,5 @@
 
 #define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, PS_ON_PIN, \
                         FAN_PIN, LASER_PIN, \
-                        _E0_PINS }
+                        _LZ_PINS }
 #endif

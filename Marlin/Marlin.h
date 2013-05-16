@@ -129,24 +129,24 @@ void manage_inactivity();
   #define disable_y() ;
 #endif
 
-#if Z_ENABLE_PIN > -1
-  #define  enable_z() WRITE(RZ_ENABLE_PIN, Z_ENABLE_ON)
-  #define disable_z() WRITE(RZ_ENABLE_PIN,!Z_ENABLE_ON)
+#if RZ_ENABLE_PIN > -1
+  #define  enable_rz() WRITE(RZ_ENABLE_PIN, RZ_ENABLE_ON)
+  #define disable_rz() WRITE(RZ_ENABLE_PIN,!RZ_ENABLE_ON)
 #else
-  #define enable_z() ;
-  #define disable_z() ;
+  #define enable_rz() ;
+  #define disable_rz() ;
 #endif
 
 #if defined(LZ_ENABLE_PIN) && (LZ_ENABLE_PIN > -1)
-  #define enable_e0() WRITE(LZ_ENABLE_PIN, E_ENABLE_ON)
-  #define disable_e0() WRITE(LZ_ENABLE_PIN,!E_ENABLE_ON)
+  #define enable_lz() WRITE(LZ_ENABLE_PIN, LZ_ENABLE_ON)
+  #define disable_lz() WRITE(LZ_ENABLE_PIN,!LZ_ENABLE_ON)
 #else
-  #define enable_e0()  /* nothing */
-  #define disable_e0() /* nothing */
+  #define enable_lz()  /* nothing */
+  #define disable_lz() /* nothing */
 #endif
 
 
-enum AxisEnum {X_AXIS=0, Y_AXIS=1, Z_AXIS=2, E_AXIS=3};
+enum AxisEnum {X_AXIS=0, Y_AXIS=1, RZ_AXIS=2, LZ_AXIS=3};
 
 
 void FlushSerialRequestResend();

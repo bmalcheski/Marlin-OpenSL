@@ -11,6 +11,12 @@
 #define STRING_VERSION_CONFIG_H __DATE__ " " __TIME__ // build date and time
 #define STRING_CONFIG_H_AUTHOR "Justin @ Pryntech" //Who made the changes.
 
+//OpenSL Print Mode
+// 0 = Steps (Slower, but consistent curing speed)
+// 1 = Scanning Segments (Faster, but untested)
+#define OPENSL_PRINT_MODE 0
+#define OPENSL_SCAN_TIME_MS_PER_MM 100
+
 // This determines the communication speed of the printer
 #define BAUDRATE 250000
 //#define BAUDRATE 115200
@@ -48,22 +54,22 @@
 #define ENDSTOPPULLUPS // Comment this out (using // at the start of the line) to disable the endstop pullup resistors
 
 #ifndef ENDSTOPPULLUPS
-  // fine Enstop settings: Individual Pullups. will be ignord if ENDSTOPPULLUPS is defined
-  #define ENDSTOPPULLUP_XMAX
-  #define ENDSTOPPULLUP_YMAX
-  #define ENDSTOPPULLUP_ZMAX
-  #define ENDSTOPPULLUP_XMIN
-  #define ENDSTOPPULLUP_YMIN
-  //#define ENDSTOPPULLUP_ZMIN
+// fine Enstop settings: Individual Pullups. will be ignord if ENDSTOPPULLUPS is defined
+#define ENDSTOPPULLUP_XMAX
+#define ENDSTOPPULLUP_YMAX
+#define ENDSTOPPULLUP_ZMAX
+#define ENDSTOPPULLUP_XMIN
+#define ENDSTOPPULLUP_YMIN
+//#define ENDSTOPPULLUP_ZMIN
 #endif
 
 #ifdef ENDSTOPPULLUPS
-  #define ENDSTOPPULLUP_XMAX
-  #define ENDSTOPPULLUP_YMAX
-  #define ENDSTOPPULLUP_ZMAX
-  #define ENDSTOPPULLUP_XMIN
-  #define ENDSTOPPULLUP_YMIN
-  #define ENDSTOPPULLUP_ZMIN
+#define ENDSTOPPULLUP_XMAX
+#define ENDSTOPPULLUP_YMAX
+#define ENDSTOPPULLUP_ZMAX
+#define ENDSTOPPULLUP_XMIN
+#define ENDSTOPPULLUP_YMIN
+#define ENDSTOPPULLUP_ZMIN
 #endif
 
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
@@ -75,21 +81,19 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
 #define X_ENABLE_ON 0
 #define Y_ENABLE_ON 0
-#define Z_ENABLE_ON 0
-#define E_ENABLE_ON 0 // For all extruders
+#define RZ_ENABLE_ON 0
+#define LZ_ENABLE_ON 0 // For all extruders
 
 // Disables axis when it's not being used.
 #define DISABLE_X false
 #define DISABLE_Y false
-#define DISABLE_Z false
-#define DISABLE_E false // For all extruders
+#define DISABLE_RZ false
+#define DISABLE_LZ false // For all extruders
 
 #define INVERT_X_DIR false    // for Mendel set to false, for Orca set to true
 #define INVERT_Y_DIR true  // for Mendel set to true, for Orca set to false
-#define INVERT_Z_DIR false     // for Mendel set to false, for Orca set to true
-#define INVERT_E0_DIR false  // for direct drive extruder v9 set to true, for geared extruder set to false
-#define INVERT_E1_DIR false    // for direct drive extruder v9 set to true, for geared extruder set to false
-#define INVERT_E2_DIR false   // for direct drive extruder v9 set to true, for geared extruder set to false
+#define INVERT_RZ_DIR false     // for Mendel set to false, for Orca set to true
+#define INVERT_LZ_DIR false  // for direct drive extruder v9 set to true, for geared extruder set to false
 
 // ENDSTOP SETTINGS:
 // Sets direction of endstops when homing; 1=MAX, -1=MIN
@@ -125,18 +129,17 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define HOMING_FEEDRATE {50*60, 50*60, 180, 180}  // set the homing speeds (mm/min)
 
 // default settings 
-#define XY_GALVO_SCALAR 20
+#define XY_GALVO_SCALAR 1
 #define DEFAULT_AXIS_STEPS_PER_UNIT   {652.79/XY_GALVO_SCALAR, 652.79/XY_GALVO_SCALAR,4000,4000}  // default steps per unit for OpenSL
 #define DEFAULT_MAX_FEEDRATE          {4000, 4000, 10, 10}    // (mm/sec)    
-#define DEFAULT_MAX_ACCELERATION      {8000,8000,4,4}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
+#define DEFAULT_MAX_ACCELERATION      {8000,8000,4,4}    // X, Y, RZ, LZ maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
-#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves 3000 for steel bearings
-#define DEFAULT_RETRACT_ACCELERATION  3000    // X, Y, Z and E max acceleration in mm/s^2 for r retracts 3000 for steel bearings
+#define DEFAULT_ACCELERATION          3000    // X, Y, RZ and LZ max acceleration in mm/s^2 for printing moves 3000 for steel bearings
+#define DEFAULT_RETRACT_ACCELERATION  3000    // X, Y, RZ and LZ max acceleration in mm/s^2 for r retracts 3000 for steel bearings
 
 // 
 #define DEFAULT_XYJERK                20.0    // (mm/sec) 20 for steel bearings
 #define DEFAULT_ZJERK                 0.4     // (mm/sec)
-#define DEFAULT_EJERK                 0.4    // (mm/sec)
 
 //===========================================================================
 //=============================Additional Features===========================
@@ -162,30 +165,30 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 //#define PANUCATT_VIKI // Panucatt ViKi (formerly VersaPanel)
 
 #ifdef PANUCATT_VIKI
- #define ULTIPANEL
- #define NEWPANEL
- #define MCP23017_LCD // Adafruit RGB LCD compatibles
+#define ULTIPANEL
+#define NEWPANEL
+#define MCP23017_LCD // Adafruit RGB LCD compatibles
 #endif
 
 
 #ifdef ULTIMAKERCONTROLLER    //automatic expansion
- #define ULTIPANEL
- #define NEWPANEL
+#define ULTIPANEL
+#define NEWPANEL
 #endif 
- 
+
 
 #ifdef ULTIPANEL
 //  #define NEWPANEL  //enable this if you have a click-encoder panel
-  #define SDSUPPORT
-  #define ULTRA_LCD
-  #define LCD_WIDTH 20
-  #define LCD_HEIGHT 4
+#define SDSUPPORT
+#define ULTRA_LCD
+#define LCD_WIDTH 20
+#define LCD_HEIGHT 4
 
 #else //no panel but just lcd 
-  #ifdef ULTRA_LCD
-    #define LCD_WIDTH 16
-    #define LCD_HEIGHT 2
-  #endif
+#ifdef ULTRA_LCD
+#define LCD_WIDTH 16
+#define LCD_HEIGHT 2
+#endif
 #endif
 
 // Increase the FAN pwm frequency. Removes the PWM noise but increases heating in the FET/Arduino
@@ -201,3 +204,4 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #include "Configuration_adv.h"
 
 #endif //__CONFIGURATION_H
+

@@ -47,14 +47,14 @@ unsigned short Galvo_YPosition;
 static unsigned char out_bits;        // The next stepping-bits to be output
 static long counter_x,       // Counter variables for the bresenham line tracer
             counter_y, 
-            counter_z,       
-            counter_e;
+            counter_rz,       
+            counter_lz;
 volatile static unsigned long step_events_completed; // The number of step events executed in the current block
 #ifdef ADVANCE
   static long advance_rate, advance, final_advance = 0;
   static long old_advance = 0;
 #endif
-static long e_steps[3];
+static long lz_steps[3];
 static long acceleration_time, deceleration_time;
 //static unsigned long accelerate_until, decelerate_after, acceleration_rate, initial_rate, final_rate, nominal_rate;
 static unsigned short acc_step_rate; // needed for deccelaration start point
@@ -173,7 +173,7 @@ void checkHitEndstops()
      SERIAL_ECHOPAIR(" Y:",(float)endstops_trigsteps[Y_AXIS]/axis_steps_per_unit[Y_AXIS]);
    }
    if(endstop_z_hit) {
-     SERIAL_ECHOPAIR(" Z:",(float)endstops_trigsteps[Z_AXIS]/axis_steps_per_unit[Z_AXIS]);
+     SERIAL_ECHOPAIR(" Z:",(float)endstops_trigsteps[RZ_AXIS]/axis_steps_per_unit[RZ_AXIS]);
    }
    SERIAL_ECHOLN("");
    endstop_x_hit=false;
@@ -263,7 +263,7 @@ FORCE_INLINE void trapezoid_generator_reset() {
     advance = current_block->initial_advance;
     final_advance = current_block->final_advance;
     // Do E steps + advance steps
-    e_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
+    lz_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
     old_advance = advance >>8;  
   #endif
   deceleration_time = 0;
@@ -298,20 +298,20 @@ ISR(TIMER1_COMPA_vect)
       trapezoid_generator_reset();
       counter_x = -(current_block->step_event_count >> 1);
       counter_y = counter_x;
-      counter_z = counter_x;
-      counter_e = counter_x;
+      counter_rz = counter_x;
+      counter_lz = counter_x;
       step_events_completed = 0; 
       
       #ifdef Z_LATE_ENABLE 
-        if(current_block->steps_z > 0) {
-          enable_z();
+        if(current_block->steps_rz > 0) {
+          enable_rz();
           OCR1A = 2000; //1ms wait
           return;
         }
       #endif
       
 //      #ifdef ADVANCE
-//      e_steps[current_block->active_extruder] = 0;
+//      lz_steps[current_block->active_extruder] = 0;
 //      #endif
     } 
     else {
@@ -338,16 +338,16 @@ ISR(TIMER1_COMPA_vect)
       count_direction[Y_AXIS]=1;
     }
 
-    if ((out_bits & (1<<Z_AXIS)) != 0) {   // -direction
-      WRITE(RZ_DIR_PIN,INVERT_Z_DIR);
+    if ((out_bits & (1<<RZ_AXIS)) != 0) {   // -direction
+      WRITE(RZ_DIR_PIN,INVERT_RZ_DIR);
       
-      count_direction[Z_AXIS]=-1;
+      count_direction[RZ_AXIS]=-1;
       CHECK_ENDSTOPS
       {
         #if Z_MIN_PIN > -1
           bool z_min_endstop=(READ(Z_MIN_PIN) != Z_ENDSTOPS_INVERTING);
-          if(z_min_endstop && old_z_min_endstop && (current_block->steps_z > 0)) {
-            endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
+          if(z_min_endstop && old_z_min_endstop && (current_block->steps_rz > 0)) {
+            endstops_trigsteps[RZ_AXIS] = count_position[RZ_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
@@ -356,15 +356,15 @@ ISR(TIMER1_COMPA_vect)
       }
     }
     else { // +direction
-      WRITE(RZ_DIR_PIN,!INVERT_Z_DIR);
+      WRITE(RZ_DIR_PIN,!INVERT_RZ_DIR);
 
-      count_direction[Z_AXIS]=1;
+      count_direction[RZ_AXIS]=1;
       CHECK_ENDSTOPS
       {
         #if Z_MAX_PIN > -1
           bool z_max_endstop=(READ(Z_MAX_PIN) != Z_ENDSTOPS_INVERTING);
-          if(z_max_endstop && old_z_max_endstop && (current_block->steps_z > 0)) {
-            endstops_trigsteps[Z_AXIS] = count_position[Z_AXIS];
+          if(z_max_endstop && old_z_max_endstop && (current_block->steps_rz > 0)) {
+            endstops_trigsteps[RZ_AXIS] = count_position[RZ_AXIS];
             endstop_z_hit=true;
             step_events_completed = current_block->step_event_count;
           }
@@ -374,13 +374,13 @@ ISR(TIMER1_COMPA_vect)
     }
 
     #ifndef ADVANCE
-      if ((out_bits & (1<<E_AXIS)) != 0) {  // -direction
-        REV_E_DIR();
-        count_direction[E_AXIS]=-1;
+      if ((out_bits & (1<<LZ_AXIS)) != 0) {  // -direction
+        REV_LZ_DIR();
+        count_direction[LZ_AXIS]=-1;
       }
       else { // +direction
-        NORM_E_DIR();
-        count_direction[E_AXIS]=1;
+        NORM_LZ_DIR();
+        count_direction[LZ_AXIS]=1;
       }
     #endif //!ADVANCE
     
@@ -392,17 +392,20 @@ ISR(TIMER1_COMPA_vect)
       #endif 
       
       #ifdef ADVANCE
-      counter_e += current_block->steps_e;
-      if (counter_e > 0) {
-        counter_e -= current_block->step_event_count;
-        if ((out_bits & (1<<E_AXIS)) != 0) { // - direction
-          e_steps[current_block->active_extruder]--;
+      counter_lz += current_block->steps_lz;
+      if (counter_lz > 0) {
+        counter_lz -= current_block->step_event_count;
+        if ((out_bits & (1<<LZ_AXIS)) != 0) { // - direction
+          lz_steps[current_block->active_extruder]--;
         }
         else {
-          e_steps[current_block->active_extruder]++;
+          lz_steps[current_block->active_extruder]++;
         }
       }    
       #endif //ADVANCE
+      
+   #if OPENSL_PRINT_MODE == 0
+      
       
       #if !defined COREXY      
       counter_x += current_block->steps_x;
@@ -434,14 +437,13 @@ ISR(TIMER1_COMPA_vect)
         if (!(counter_x > 0)&&(counter_y>0)){  //Y step only
           counter_y -= current_block->step_event_count; 
           count_position[Y_AXIS]+=count_direction[Y_AXIS];
-          update_X_galvo(count_direction[X_AXIS]);
           update_Y_galvo(count_direction[Y_AXIS]);
         }        
         
         if ((counter_x > 0)&&(counter_y>0)){  //step in both axes
           if (((out_bits & (1<<X_AXIS)) == 0)^((out_bits & (1<<Y_AXIS)) == 0)){  //X and Y in different directions
             counter_x -= current_block->step_event_count;  
-            step_wait();
+            //step_wait();
             count_position[X_AXIS]+=count_direction[X_AXIS];
             count_position[Y_AXIS]+=count_direction[Y_AXIS];
             update_X_galvo(count_direction[X_AXIS]);
@@ -450,7 +452,7 @@ ISR(TIMER1_COMPA_vect)
           }
           else{  //X and Y in same direction
             counter_x -= current_block->step_event_count;    
-            step_wait();
+            //step_wait();
             count_position[X_AXIS]+=count_direction[X_AXIS];
             count_position[Y_AXIS]+=count_direction[Y_AXIS];
             update_X_galvo(count_direction[X_AXIS]);
@@ -460,23 +462,38 @@ ISR(TIMER1_COMPA_vect)
         }
       #endif //corexy
 
-      counter_z += current_block->steps_z;
-      if (counter_z > 0) {
-        WRITE(RZ_STEP_PIN, !INVERT_Z_STEP_PIN);
+   #else
+      //Scanning X&Y With Galvos!
         
-        counter_z -= current_block->step_event_count;
-        count_position[Z_AXIS]+=count_direction[Z_AXIS];
-        WRITE(RZ_STEP_PIN, INVERT_Z_STEP_PIN);
+      unsigned short old_x = Galvo_XPosition;
+      unsigned short old_y = Galvo_YPosition;
+      
+      Galvo_WorldXPosition = Galvo_WorldXPosition + (count_direction[X_AXIS] * current_block->steps_x);
+      Galvo_WorldYPosition = Galvo_WorldYPosition + (count_direction[Y_AXIS] * current_block->steps_y);
+      
+      Galvo_XPosition = World_to_Galvo(Galvo_WorldXPosition);
+      Galvo_YPosition = World_to_Galvo(Galvo_WorldYPosition);
+      scan_X_Y_galvo(old_x, old_y, Galvo_XPosition, Galvo_YPosition);
+      
+   #endif //OPENSL_PRINT_MODE
+      
+      counter_rz += current_block->steps_rz;
+      if (counter_rz > 0) {
+        WRITE(RZ_STEP_PIN, !INVERT_RZ_STEP_PIN);
+        
+        counter_rz -= current_block->step_event_count;
+        count_position[RZ_AXIS]+=count_direction[RZ_AXIS];
+        WRITE(RZ_STEP_PIN, INVERT_RZ_STEP_PIN);
         
       }
 
       #ifndef ADVANCE
-        counter_e += current_block->steps_e;
-        if (counter_e > 0) {
-          WRITE_E_STEP(!INVERT_E_STEP_PIN);
-          counter_e -= current_block->step_event_count;
-          count_position[E_AXIS]+=count_direction[E_AXIS];
-          WRITE_E_STEP(INVERT_E_STEP_PIN);
+        counter_lz += current_block->steps_lz;
+        if (counter_lz > 0) {
+          WRITE_LZ_STEP(!INVERT_LZ_STEP_PIN);
+          counter_lz -= current_block->step_event_count;
+          count_position[LZ_AXIS]+=count_direction[LZ_AXIS];
+          WRITE_LZ_STEP(INVERT_LZ_STEP_PIN);
         }
       #endif //!ADVANCE
       step_events_completed += 1;  
@@ -504,7 +521,7 @@ ISR(TIMER1_COMPA_vect)
         }
         //if(advance > current_block->advance) advance = current_block->advance;
         // Do E steps + advance steps
-        e_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
+        lz_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
         old_advance = advance >>8;  
         
       #endif
@@ -533,7 +550,7 @@ ISR(TIMER1_COMPA_vect)
         }
         if(advance < final_advance) advance = final_advance;
         // Do E steps + advance steps
-        e_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
+        lz_steps[current_block->active_extruder] += ((advance >>8) - old_advance);
         old_advance = advance >>8;  
       #endif //ADVANCE
     }
@@ -551,7 +568,7 @@ ISR(TIMER1_COMPA_vect)
 
 #ifdef ADVANCE
   unsigned char old_OCR0A;
-  // Timer interrupt for E. e_steps is set in the main routine;
+  // Timer interrupt for E. lz_steps is set in the main routine;
   // Timer 0 is shared with millies
   ISR(TIMER0_COMPA_vect)
   {
@@ -559,17 +576,17 @@ ISR(TIMER1_COMPA_vect)
     OCR0A = old_OCR0A;
     // Set E direction (Depends on E direction + advance)
     for(unsigned char i=0; i<4;i++) {
-      if (e_steps[0] != 0) {
-        WRITE(LZ_STEP_PIN, INVERT_E_STEP_PIN);
-        if (e_steps[0] < 0) {
-          WRITE(LZ_DIR_PIN, INVERT_E0_DIR);
-          e_steps[0]++;
-          WRITE(LZ_STEP_PIN, !INVERT_E_STEP_PIN);
+      if (lz_steps[0] != 0) {
+        WRITE(LZ_STEP_PIN, INVERT_LZ_STEP_PIN);
+        if (lz_steps[0] < 0) {
+          WRITE(LZ_DIR_PIN, INVERT_LZ_DIR);
+          lz_steps[0]++;
+          WRITE(LZ_STEP_PIN, !INVERT_LZ_STEP_PIN);
         } 
-        else if (e_steps[0] > 0) {
-          WRITE(LZ_DIR_PIN, !INVERT_E0_DIR);
-          e_steps[0]--;
-          WRITE(LZ_STEP_PIN, !INVERT_E_STEP_PIN);
+        else if (lz_steps[0] > 0) {
+          WRITE(LZ_DIR_PIN, !INVERT_LZ_DIR);
+          lz_steps[0]--;
+          WRITE(LZ_STEP_PIN, !INVERT_LZ_STEP_PIN);
         }
       }
     }
@@ -589,11 +606,11 @@ void st_init()
   //Initialize Enable Pins - steppers default to disabled.
   #if (RZ_ENABLE_PIN > -1)
     SET_OUTPUT(RZ_ENABLE_PIN);
-    if(!Z_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
+    if(!RZ_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
   #endif
   #if (LZ_ENABLE_PIN > -1)
     SET_OUTPUT(LZ_ENABLE_PIN);
-    if(!E_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
+    if(!LZ_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
   #endif
   
   //endstops and pullups
@@ -616,14 +633,14 @@ void st_init()
   //Initialize Step Pins
   #if (RZ_STEP_PIN > -1) 
     SET_OUTPUT(RZ_STEP_PIN);
-    WRITE(RZ_STEP_PIN,INVERT_Z_STEP_PIN);
-    if(!Z_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
+    WRITE(RZ_STEP_PIN,INVERT_RZ_STEP_PIN);
+    if(!RZ_ENABLE_ON) WRITE(RZ_ENABLE_PIN,HIGH);
     
   #endif  
   #if (LZ_STEP_PIN > -1) 
     SET_OUTPUT(LZ_STEP_PIN);
-    WRITE(LZ_STEP_PIN,INVERT_E_STEP_PIN);
-    if(!E_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
+    WRITE(LZ_STEP_PIN,INVERT_LZ_STEP_PIN);
+    if(!LZ_ENABLE_ON) WRITE(LZ_ENABLE_PIN,HIGH);
   #endif  
 
   #ifdef CONTROLLERFAN_PIN
@@ -656,9 +673,9 @@ void st_init()
     TCCR0A &= ~(1<<WGM01);
     TCCR0A &= ~(1<<WGM00);
   #endif  
-    e_steps[0] = 0;
-    e_steps[1] = 0;
-    e_steps[2] = 0;
+    lz_steps[0] = 0;
+    lz_steps[1] = 0;
+    lz_steps[2] = 0;
     TIMSK0 |= (1<<OCIE0A);
   #endif //ADVANCE
   
@@ -685,21 +702,56 @@ void digitalPotWrite(int channel, int value) {
   digitalWrite(GALVO_SS_PIN,HIGH);
 }
 
-void update_X_galvo(int step_dir)
+void scan_X_Y_galvo(unsigned short x1, unsigned short y1, unsigned short x2, unsigned short y2)
 {
-   Galvo_WorldXPosition+=step_dir;
-   if(Galvo_WorldXPosition > 0xFEFF)
+   unsigned long x_dist_sq_mm = ((x2-x1)*(x2-x1) * XY_GALVO_SCALAR) / axis_steps_per_unit[X_AXIS]; 
+   unsigned long y_dist_sq_mm = ((y2-y1)*(y2-y1) * XY_GALVO_SCALAR) / axis_steps_per_unit[Y_AXIS];
+   double scan_dist_mm = sqrt(x_dist_sq_mm + y_dist_sq_mm);
+   
+   unsigned short scan_time_ms = ceil(scan_dist_mm * OPENSL_SCAN_TIME_MS_PER_MM);
+   if(scan_time_ms == 0)
    {
-      Galvo_XPosition = 0xFEFF;
+     scan_time_ms = 1;
    }
-   else if(Galvo_WorldXPosition <= 0)
+   
+   unsigned long startTime = millis();
+   
+   boolean first_point = true;
+   while(millis() < startTime + scan_time_ms)
    {
-      Galvo_XPosition = 0x0000;
+     if(first_point)
+     {
+        coordinate_XY_move(x1, y1);
+        first_point = false;
+     }
+     else
+     {
+        coordinate_XY_move(x2, y2);
+        first_point = true;
+     }
+   }
+}
+
+short World_to_Galvo(long value)
+{
+   if(value > 0xFEFF)
+   {
+      return 0xFEFF;
+   }
+   else if(value <= 0)
+   {
+      return 0x0000;
    }
    else
    {
-      Galvo_XPosition = Galvo_WorldXPosition & 0x0000FFFF;
+      return 0x0000FFFF;
    }   
+}
+
+void update_X_galvo(int step_dir)
+{
+   Galvo_WorldXPosition+=step_dir;
+   Galvo_XPosition = World_to_Galvo(Galvo_WorldXPosition);
    
    move_X_galvo(Galvo_XPosition);
 }
@@ -707,18 +759,7 @@ void update_X_galvo(int step_dir)
 void update_Y_galvo(int step_dir)
 {
    Galvo_WorldYPosition+=step_dir;
-   if(Galvo_WorldYPosition > 0xFEFF)
-   {
-      Galvo_YPosition = 0xFEFF;
-   }
-   else if(Galvo_WorldYPosition <= 0)
-   {
-      Galvo_YPosition = 0x0000;
-   }
-   else
-   {
-      Galvo_YPosition = Galvo_WorldYPosition & 0X0000FFFF;
-   }   
+   Galvo_YPosition = World_to_Galvo(Galvo_WorldYPosition);
    
    move_Y_galvo(Galvo_YPosition);
 }
@@ -727,6 +768,34 @@ void move_galvos(unsigned short X, unsigned short Y)
 {
   move_X_galvo(X);
   move_Y_galvo(Y);
+}
+
+void coordinate_XY_move(unsigned short X, unsigned short Y)
+{
+  unsigned char xHigh = (((X*XY_GALVO_SCALAR) & 0xFF00) >> 8);
+  unsigned char xLow  = (X*XY_GALVO_SCALAR) & 0x00FF;
+  
+  if(xHigh == 0xFF)
+  {
+     xHigh = 0xFE;
+     xLow = 0xFF;
+  }
+     
+  
+  unsigned char yHigh = ((Y*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
+  unsigned char yLow  = (Y*XY_GALVO_SCALAR)  & 0x00FF;
+  
+  if(yHigh == 0xFF)
+  {
+     yHigh = 0xFE;
+     yLow = 0xFF;
+  }  
+  digitalPotWrite(0, xHigh);
+  digitalPotWrite(1, yHigh);
+  digitalPotWrite(2, xHigh+1);
+  digitalPotWrite(3, yHigh+1);
+  digitalPotWrite(4, xLow);
+  digitalPotWrite(5, yLow);
 }
 
 void move_X_galvo(unsigned short X)
@@ -760,20 +829,20 @@ void move_Y_galvo(unsigned short Y)
   digitalPotWrite(5, yLow);
 }
 
-void st_set_position(const long &x, const long &y, const long &z, const long &e)
+void st_set_position(const long &x, const long &y, const long &rz, const long &lz)
 {
   CRITICAL_SECTION_START;
   count_position[X_AXIS] = x;
   count_position[Y_AXIS] = y;
-  count_position[Z_AXIS] = z;
-  count_position[E_AXIS] = e;
+  count_position[RZ_AXIS] = rz;
+  count_position[LZ_AXIS] = lz;
   CRITICAL_SECTION_END;
 }
 
-void st_set_e_position(const long &e)
+void st_set_e_position(const long &lz)
 {
   CRITICAL_SECTION_START;
-  count_position[E_AXIS] = e;
+  count_position[LZ_AXIS] = lz;
   CRITICAL_SECTION_END;
 }
 
@@ -791,8 +860,8 @@ void finishAndDisableSteppers()
   st_synchronize(); 
   disable_x(); 
   disable_y(); 
-  disable_z(); 
-  disable_e0(); 
+  disable_rz(); 
+  disable_lz(); 
 }
 
 void quickStop()

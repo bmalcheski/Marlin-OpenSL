@@ -23,9 +23,9 @@
 
 #include "planner.h"
 
-#define WRITE_E_STEP(v) WRITE(LZ_STEP_PIN, v)
-#define NORM_E_DIR() WRITE(LZ_DIR_PIN, !INVERT_E0_DIR)
-#define REV_E_DIR() WRITE(LZ_DIR_PIN, INVERT_E0_DIR)
+#define WRITE_LZ_STEP(v) WRITE(LZ_STEP_PIN, v)
+#define NORM_LZ_DIR() WRITE(LZ_DIR_PIN, !INVERT_LZ_DIR)
+#define REV_LZ_DIR() WRITE(LZ_DIR_PIN, INVERT_LZ_DIR)
 
 
 // Initialize and start the stepper motor subsystem
@@ -35,8 +35,8 @@ void st_init();
 void st_synchronize();
 
 // Set current position in steps
-void st_set_position(const long &x, const long &y, const long &z, const long &e);
-void st_set_e_position(const long &e);
+void st_set_position(const long &x, const long &y, const long &rz, const long &lz);
+void st_set_e_position(const long &lz);
 
 // Get current position in steps
 long st_get_position(uint8_t axis);
@@ -47,6 +47,10 @@ void st_wake_up();
 
 //Galvo Control
 
+void scan_X_Y_galvo(unsigned short x1, unsigned short y1, unsigned short x2, unsigned short y2);
+void coordinate_XY_move(unsigned short X, unsigned short Y);
+
+short World_to_Galvo(long value);
 void update_X_galvo(int step_dir);
 void update_Y_galvo(int step_dir);
 void digitalPotWrite(int channel, int value);

@@ -164,7 +164,6 @@ inline void EEPROM_RetrieveSettings(bool def=false)
       mintravelfeedrate=DEFAULT_MINTRAVELFEEDRATE;
       max_xy_jerk=DEFAULT_XYJERK;
       max_z_jerk=DEFAULT_ZJERK;
-      max_e_jerk=DEFAULT_EJERK;
       add_homeing[0] = add_homeing[1] = add_homeing[2] = 0;
       SERIAL_ECHO_START;
       SERIAL_ECHOLN("Using Default settings:");
