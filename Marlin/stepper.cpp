@@ -465,15 +465,13 @@ ISR(TIMER1_COMPA_vect)
    #else
       //Scanning X&Y With Galvos!
         
-      unsigned short old_x = Galvo_XPosition;
-      unsigned short old_y = Galvo_YPosition;
+      unsigned long old_x = Galvo_WorldXPosition;
+      unsigned long old_y = Galvo_WorldYPosition;
       
       Galvo_WorldXPosition = Galvo_WorldXPosition + (count_direction[X_AXIS] * current_block->steps_x);
       Galvo_WorldYPosition = Galvo_WorldYPosition + (count_direction[Y_AXIS] * current_block->steps_y);
       
-      Galvo_XPosition = World_to_Galvo(Galvo_WorldXPosition);
-      Galvo_YPosition = World_to_Galvo(Galvo_WorldYPosition);
-      scan_X_Y_galvo(old_x, old_y, Galvo_XPosition, Galvo_YPosition);
+      scan_X_Y_galvo(old_x, old_y, Galvo_WorldXPosition, Galvo_WorldYPosition);
       
    #endif //OPENSL_PRINT_MODE
       
@@ -702,7 +700,7 @@ void digitalPotWrite(int channel, int value) {
   digitalWrite(GALVO_SS_PIN,HIGH);
 }
 
-void scan_X_Y_galvo(unsigned short x1, unsigned short y1, unsigned short x2, unsigned short y2)
+void scan_X_Y_galvo(unsigned long x1, unsigned long y1, unsigned long x2, unsigned long y2)
 {
    unsigned long x_dist_sq_mm = ((x2-x1)*(x2-x1) * XY_GALVO_SCALAR) / axis_steps_per_unit[X_AXIS]; 
    unsigned long y_dist_sq_mm = ((y2-y1)*(y2-y1) * XY_GALVO_SCALAR) / axis_steps_per_unit[Y_AXIS];
@@ -731,49 +729,64 @@ void scan_X_Y_galvo(unsigned short x1, unsigned short y1, unsigned short x2, uns
      }
    }
 }
-
-short World_to_Galvo(long value)
-{
-   if(value > 0xFEFF)
-   {
-      return 0xFEFF;
-   }
-   else if(value <= 0)
-   {
-      return 0x0000;
-   }
-   else
-   {
-      return 0x0000FFFF;
-   }   
-}
-
 void update_X_galvo(int step_dir)
 {
-   Galvo_WorldXPosition+=step_dir;
-   Galvo_XPosition = World_to_Galvo(Galvo_WorldXPosition);
-   
-   move_X_galvo(Galvo_XPosition);
+   Galvo_WorldXPosition+=step_dir;  
+   unsigned short s = (unsigned short)Galvo_WorldXPosition;
+   if(Galvo_WorldXPosition > 0x0000FEFF)
+   {
+      s = 0x0000FEFF;
+   }
+   move_X_galvo(s);
 }
 
 void update_Y_galvo(int step_dir)
 {
    Galvo_WorldYPosition+=step_dir;
-   Galvo_YPosition = World_to_Galvo(Galvo_WorldYPosition);
+   unsigned short s = (unsigned short)Galvo_WorldYPosition;
+   if(Galvo_WorldYPosition > 0x0000FEFF)
+   {
+      s = 0x0000FEFF;
+   }
    
-   move_Y_galvo(Galvo_YPosition);
+   move_Y_galvo(s);
 }
 
-void move_galvos(unsigned short X, unsigned short Y)
+void move_galvos(unsigned long X, unsigned long Y)
 {
-  move_X_galvo(X);
-  move_Y_galvo(Y);
+  
+   unsigned short sX = (unsigned short)X;
+   if(X > 0x0000FEFF)
+   {
+      sX = 0x0000FEFF;
+   }
+   
+   unsigned short sY = (unsigned short)Y;
+   if(Y > 0x0000FEFF)
+   {
+      sY = 0x0000FEFF;
+   }
+  move_X_galvo(sX);
+  move_Y_galvo(sY);
 }
 
-void coordinate_XY_move(unsigned short X, unsigned short Y)
+void coordinate_XY_move(unsigned long X, unsigned long Y)
 {
-  unsigned char xHigh = (((X*XY_GALVO_SCALAR) & 0xFF00) >> 8);
-  unsigned char xLow  = (X*XY_GALVO_SCALAR) & 0x00FF;
+  
+   unsigned short sX = (unsigned short)X;
+   if(X > 0x0000FEFF)
+   {
+      sX = 0x0000FEFF;
+   }
+   
+   unsigned short sY = (unsigned short)Y;
+   if(Y > 0x0000FEFF)
+   {
+      sY = 0x0000FEFF;
+   }
+   
+  unsigned char xHigh = (((sX*XY_GALVO_SCALAR) & 0xFF00) >> 8);
+  unsigned char xLow  = (sX*XY_GALVO_SCALAR) & 0x00FF;
   
   if(xHigh == 0xFF)
   {
@@ -782,8 +795,8 @@ void coordinate_XY_move(unsigned short X, unsigned short Y)
   }
      
   
-  unsigned char yHigh = ((Y*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
-  unsigned char yLow  = (Y*XY_GALVO_SCALAR)  & 0x00FF;
+  unsigned char yHigh = ((sY*XY_GALVO_SCALAR)  & 0xFF00) >> 8;
+  unsigned char yLow  = (sY*XY_GALVO_SCALAR)  & 0x00FF;
   
   if(yHigh == 0xFF)
   {
@@ -823,7 +836,9 @@ void move_Y_galvo(unsigned short Y)
   {
      yHigh = 0xFE;
      yLow = 0xFF;
-  }  
+  }
+  
+  
   digitalPotWrite(1, yHigh);
   digitalPotWrite(3, yHigh+1);
   digitalPotWrite(5, yLow);

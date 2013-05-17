@@ -625,10 +625,8 @@ static void homeaxis(int axis) {
   
     Galvo_WorldXPosition = 0;
     Galvo_WorldYPosition = 0;
-    Galvo_XPosition = 0;
-    Galvo_YPosition = 0;
   
-    move_galvos(Galvo_XPosition, Galvo_YPosition);
+    move_galvos(Galvo_WorldXPosition, Galvo_WorldYPosition);
 }
 #define HOMEAXIS(LETTER) homeaxis(LETTER##_AXIS)
 
@@ -950,11 +948,7 @@ void process_commands()
         SERIAL_PROTOCOL(Galvo_WorldXPosition);
         SERIAL_PROTOCOLPGM(",");
         SERIAL_PROTOCOL(Galvo_WorldYPosition);
-        SERIAL_PROTOCOLPGM(") :: (");
-        SERIAL_PROTOCOL(Galvo_XPosition);
-        SERIAL_PROTOCOLPGM(",");      
-        SERIAL_PROTOCOL(Galvo_YPosition);
-        SERIAL_PROTOCOLPGM(")");      
+        SERIAL_PROTOCOLPGM(") "); 
         break;
     #endif //LASER_PIN
     

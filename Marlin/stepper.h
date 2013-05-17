@@ -47,14 +47,14 @@ void st_wake_up();
 
 //Galvo Control
 
-void scan_X_Y_galvo(unsigned short x1, unsigned short y1, unsigned short x2, unsigned short y2);
-void coordinate_XY_move(unsigned short X, unsigned short Y);
+void scan_X_Y_galvo(unsigned long x1, unsigned long y1, unsigned long x2, unsigned long y2);
+void coordinate_XY_move(unsigned long X, unsigned long Y);
 
 short World_to_Galvo(long value);
 void update_X_galvo(int step_dir);
 void update_Y_galvo(int step_dir);
 void digitalPotWrite(int channel, int value);
-void move_galvos(unsigned short X, unsigned short Y);
+void move_galvos(unsigned long X, unsigned long Y);
 void move_X_galvo(unsigned short X);
 void move_Y_galvo(unsigned short Y);
 
@@ -70,8 +70,6 @@ void finishAndDisableSteppers();
 extern block_t *current_block;  // A pointer to the block currently being traced
 extern unsigned long Galvo_WorldXPosition;
 extern unsigned long Galvo_WorldYPosition;
-extern unsigned short Galvo_XPosition;
-extern unsigned short Galvo_YPosition;
 
 void quickStop();
 #endif
