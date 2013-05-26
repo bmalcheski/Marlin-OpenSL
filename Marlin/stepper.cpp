@@ -473,6 +473,7 @@ ISR(TIMER1_COMPA_vect)
       
       scan_X_Y_galvo(old_x, old_y, Galvo_WorldXPosition, Galvo_WorldYPosition);
       
+      return;
    #endif //OPENSL_PRINT_MODE
       
       counter_rz += current_block->steps_rz;
@@ -702,11 +703,11 @@ void digitalPotWrite(int channel, int value) {
 
 void scan_X_Y_galvo(unsigned long x1, unsigned long y1, unsigned long x2, unsigned long y2)
 {
-   unsigned long x_dist_sq_mm = ((x2-x1)*(x2-x1) * XY_GALVO_SCALAR) / axis_steps_per_unit[X_AXIS]; 
-   unsigned long y_dist_sq_mm = ((y2-y1)*(y2-y1) * XY_GALVO_SCALAR) / axis_steps_per_unit[Y_AXIS];
-   double scan_dist_mm = sqrt(x_dist_sq_mm + y_dist_sq_mm);
+ //  unsigned long x_dist_sq_mm = ((x2-x1)*(x2-x1) * XY_GALVO_SCALAR) / axis_steps_per_unit[X_AXIS]; 
+ //  unsigned long y_dist_sq_mm = ((y2-y1)*(y2-y1) * XY_GALVO_SCALAR) / axis_steps_per_unit[Y_AXIS];
+ //  double scan_dist_mm = sqrt(x_dist_sq_mm + y_dist_sq_mm);
    
-   unsigned short scan_time_ms = ceil(scan_dist_mm * OPENSL_SCAN_TIME_MS_PER_MM);
+   unsigned long scan_time_ms = 1000; //ceil(scan_dist_mm * OPENSL_SCAN_TIME_MS_PER_MM);
    if(scan_time_ms == 0)
    {
      scan_time_ms = 1;
@@ -715,7 +716,7 @@ void scan_X_Y_galvo(unsigned long x1, unsigned long y1, unsigned long x2, unsign
    unsigned long startTime = millis();
    
    boolean first_point = true;
-   while(millis() < startTime + scan_time_ms)
+   while(millis() < startTime + 1000)
    {
      if(first_point)
      {
