@@ -114,7 +114,7 @@ inline void EEPROM_printSettings()
       SERIAL_ECHO_START;
       SERIAL_ECHOPAIR("  M206 X",add_homeing[0] );
       SERIAL_ECHOPAIR(" Y" ,add_homeing[1] );
-      SERIAL_ECHOPAIR(" RZ" ,add_homeing[2] );
+      SERIAL_ECHOPAIR(" RZ" ,add_homeing[2] + add_homeing[3] );
       SERIAL_ECHOPAIR(" LZ" ,add_homeing[3] );
       SERIAL_ECHOLN("");
 //  #endif

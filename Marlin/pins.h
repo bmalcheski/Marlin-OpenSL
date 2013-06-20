@@ -69,11 +69,13 @@
 #ifdef DISABLE_MAX_ENDSTOPS
 #define X_MAX_PIN          -1
 #define Y_MAX_PIN          -1
-#define Z_MAX_PIN          -1
+#define RZ_MAX_PIN         -1
+#define LZ_MAX_PIN         -1
+#define Z_MAX_PIN          RZ_MAX_PIN
+#define Z_MIN_PIN          RZ_MIN_PIN
 #endif
 
 
-#define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, RZ_MIN_PIN, RZ_MAX_PIN, LED_PIN, PS_ON_PIN, \
-                        FAN_PIN, LASER_PIN, \
-                        _LZ_PINS }
+#define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, RZ_MIN_PIN, RZ_MAX_PIN, LZ_MIN_PIN, LZ_MAX_PIN, LED_PIN, PS_ON_PIN, \
+                        FAN_PIN, LASER_PIN, }
 #endif
