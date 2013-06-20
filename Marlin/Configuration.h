@@ -129,7 +129,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define DEFAULT_MAX_ACCELERATION      {12000,12000,4,4}    // X, Y, RZ, LZ maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
 #define DEFAULT_ACCELERATION          5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for printing moves 3000 for steel bearings
-//#define DEFAULT__ACCELERATION  5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for r retracts 3000 for steel bearings
+#define DEFAULT_RETRACT_ACCELERATION  5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for r retracts 3000 for steel bearings
 
 // 
 #define DEFAULT_XYJERK                300.0    // (mm/sec) 20 for steel bearings

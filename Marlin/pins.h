@@ -35,9 +35,12 @@
 #define RZ_MIN_PIN          13
 #define RZ_MAX_PIN          -1
 
+
 #define LZ_STEP_PIN         16
 #define LZ_DIR_PIN          35
 #define LZ_ENABLE_PIN       17
+#define LZ_MIN_PIN          13
+#define LZ_MAX_PIN          -1
 
 #define FAN_PIN            15  // Fan
 

@@ -159,7 +159,7 @@ inline void EEPROM_RetrieveSettings(bool def=false)
         max_acceleration_units_per_sq_second[i]=tmp3[i];
       }
       acceleration=DEFAULT_ACCELERATION;
-//      retract_acceleration=DEFAULT_RETRACT_ACCELERATION;
+      retract_acceleration=DEFAULT_RETRACT_ACCELERATION;
       minimumfeedrate=DEFAULT_MINIMUMFEEDRATE;
       minsegmenttime=DEFAULT_MINSEGMENTTIME;       
       mintravelfeedrate=DEFAULT_MINTRAVELFEEDRATE;

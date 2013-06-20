@@ -602,7 +602,7 @@ static void homeaxis(int axis) {
   ((LETTER##_MIN_PIN > -1 && LETTER##_HOME_DIR==-1) || (LETTER##_MAX_PIN > -1 && LETTER##_HOME_DIR==1))
 #define plan_set_position
   //Since we only have z steppers, just home z axis -- also need to account for second Z...! 
-  if (axis==RZ_AXIS ? HOMEAXIS_DO(RZ) :
+  if (axis==RZ_AXIS || LZ_AXIS ? HOMEAXIS_DO(RZ) && HOMEAXIS_DO(LZ) :
       0) {
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
@@ -653,7 +653,7 @@ void process_commands()
     case 0: // G0 -> G1
     case 1: // G1
       if(Stopped == false) {
-      get_coordinates(); // For X Y Z E F
+      get_coordinates(); // For X Y RZ LZ F
       prepare_move();
       //ClearToSend();
       return;
