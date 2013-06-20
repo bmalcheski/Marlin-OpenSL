@@ -22,21 +22,8 @@
 //#define BAUDRATE 115200
 
 //// The following define selects which electronics board you have. Please choose the one that matches your setup
-// Gen7 custom (Alfons3 Version) = 10 "https://github.com/Alfons3/Generation_7_Electronics"
-// Gen7 v1.1, v1.2 = 11
-// Gen7 v1.3 = 12
-// Gen7 v1.4 = 13
-// MEGA/RAMPS up to 1.2 = 3
-// RAMPS 1.3 = 33 (Power outputs: Extruder, Bed, Fan)
-// RAMPS 1.3 = 34 (Power outputs: Extruder0, Extruder1, Bed)
-// Gen6 = 5
-// Gen6 deluxe = 51
-// Sanguinololu 1.2 and above = 62
-// Melzi = 63
-// Ultimaker = 7
-// Teensylu = 8
 // OpenSL = 81
-// Gen3+ =9
+
 #define MOTHERBOARD 81
 
 #if (MOTHERBOARD == 81) //OpenSL
@@ -75,7 +62,7 @@
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
 const bool X_ENDSTOPS_INVERTING = false; // set to true to invert the logic of the endstops. 
 const bool Y_ENDSTOPS_INVERTING = false; // set to true to invert the logic of the endstops. 
-const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of the endstops. 
+const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of the endstops.
 #define DISABLE_MAX_ENDSTOPS
 
 // For Inverting Stepper Enable Pins (Active Low) use 0, Non Inverting (Active High) use 1
@@ -90,10 +77,10 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define DISABLE_RZ false
 #define DISABLE_LZ false // For all extruders
 
-#define INVERT_X_DIR false    // for Mendel set to false, for Orca set to true
-#define INVERT_Y_DIR true  // for Mendel set to true, for Orca set to false
-#define INVERT_RZ_DIR false     // for Mendel set to false, for Orca set to true
-#define INVERT_LZ_DIR false  // for direct drive extruder v9 set to true, for geared extruder set to false
+#define INVERT_X_DIR false    // for OpenSL set to false.
+#define INVERT_Y_DIR true  // for OpenSL set to true.
+#define INVERT_RZ_DIR false     // for OpenSL set to false.
+#define INVERT_LZ_DIR false  // For OpenSL set to false. This used to be E
 
 // ENDSTOP SETTINGS:
 // Sets direction of endstops when homing; 1=MAX, -1=MIN
@@ -125,7 +112,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define MANUAL_Z_HOME_POS 0
 
 //// MOVEMENT SETTINGS
-#define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
+#define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, RZ, LZ (E)
 #define HOMING_FEEDRATE {50*60, 50*60, 180, 180}  // set the homing speeds (mm/min)
 
 // default settings 
