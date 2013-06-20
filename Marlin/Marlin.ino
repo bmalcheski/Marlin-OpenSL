@@ -727,11 +727,11 @@ void process_commands()
       feedrate = 0.0;
       home_all_axis = !((code_seen(axis_codes[0])) || (code_seen(axis_codes[1])) || (code_seen(axis_codes[2])));
       
-      #if Z_HOME_DIR > 0                      // If homing away from BED do Z first
-      if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
-        HOMEAXIS(Z);
-      }
-      #endif
+//      #if Z_HOME_DIR > 0                      // If homing away from BED do Z first OpenSL homes at "bed"
+//      if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
+//        HOMEAXIS(Z);
+//      }
+//      #endif
       
       #ifdef QUICK_HOME
       if((home_all_axis)||( code_seen(axis_codes[X_AXIS]) && code_seen(axis_codes[Y_AXIS])) )  //first diagonal move
@@ -767,11 +767,18 @@ void process_commands()
        HOMEAXIS(Y);
       }
       
-      #if Z_HOME_DIR < 0                      // If homing towards BED do Z last
+      #if RZ_HOME_DIR < 0                      // If homing towards BED do Z last
       if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
         HOMEAXIS(RZ);
       }
       #endif
+      
+      if LZ_HOME_DIR < 0
+      if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
+        HOMEAXIS (LZ);
+      }
+      #endif
+      
       
       if(code_seen(axis_codes[X_AXIS])) 
       {
@@ -791,6 +798,13 @@ void process_commands()
           current_position[RZ_AXIS]=code_value()+add_homeing[2];
         }
       }
+      
+      if(code_seen(axis_codes[LZ_AXIS])) {
+        if(code_value_long() !=0) {
+          current_position[LZ_AXIS]=code_value()+add_homeing[3];
+        }
+      }
+      
       plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
       
       #ifdef ENDSTOPS_ONLY_FOR_HOMING
