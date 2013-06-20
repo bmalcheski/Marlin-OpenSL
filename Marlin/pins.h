@@ -32,8 +32,8 @@
 #define RZ_STEP_PIN         34
 #define RZ_DIR_PIN          32
 #define RZ_ENABLE_PIN       33
-#define Z_MIN_PIN          13
-#define Z_MAX_PIN          -1
+#define RZ_MIN_PIN          13
+#define RZ_MAX_PIN          -1
 
 #define LZ_STEP_PIN         16
 #define LZ_DIR_PIN          35
@@ -70,7 +70,7 @@
 #endif
 
 
-#define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, LED_PIN, PS_ON_PIN, \
+#define SENSITIVE_PINS {0, 1, RZ_STEP_PIN, RZ_DIR_PIN, RZ_ENABLE_PIN, LZ_STEP_PIN, LZ_DIR_PIN, LZ_ENABLE_PIN, RZ_MIN_PIN, RZ_MAX_PIN, LED_PIN, PS_ON_PIN, \
                         FAN_PIN, LASER_PIN, \
                         _LZ_PINS }
 #endif

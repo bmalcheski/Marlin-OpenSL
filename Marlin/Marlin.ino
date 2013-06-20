@@ -135,10 +135,10 @@ volatile int feedmultiply=100; //100->1 200->2
 int saved_feedmultiply;
 volatile bool feedmultiplychanged=false;
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
-float add_homeing[3]={0,0,0};
-float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
-float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
-//uint8_t active_extruder = 0; Removing E ties
+float add_homeing[4]={0,0,0,0};
+float min_pos[4] = { X_MIN_POS, Y_MIN_POS, RZ_MIN_POS, LZ_MIN_POS};
+float max_pos[4] = { X_MAX_POS, Y_MAX_POS, RZ_MAX_POS, LZ_MIN_POS };
+
 unsigned char FanSpeed=0;
 unsigned char LaserPower=0;
 
@@ -574,10 +574,12 @@ DEFINE_PGM_READ_ANY(float,       float);
 DEFINE_PGM_READ_ANY(signed char, byte);
 
 #define XYZ_CONSTS_FROM_CONFIG(type, array, CONFIG)	\
-static const PROGMEM type array##_P[3] =		\
-    { X_##CONFIG, Y_##CONFIG, Z_##CONFIG };		\
+static const PROGMEM type array##_P[4] =		\
+    { X_##CONFIG, Y_##CONFIG, RZ_##CONFIG, LZ_##CONFIG };		\
 static inline type array(int axis)			\
     { return pgm_read_any(&array##_P[axis]); }
+
+
 
 XYZ_CONSTS_FROM_CONFIG(float, base_min_pos,    MIN_POS);
 XYZ_CONSTS_FROM_CONFIG(float, base_max_pos,    MAX_POS);
@@ -585,6 +587,9 @@ XYZ_CONSTS_FROM_CONFIG(float, base_home_pos,   HOME_POS);
 XYZ_CONSTS_FROM_CONFIG(float, max_length,      MAX_LENGTH);
 XYZ_CONSTS_FROM_CONFIG(float, home_retract_mm, HOME_RETRACT_MM);
 XYZ_CONSTS_FROM_CONFIG(signed char, home_dir,  HOME_DIR);
+
+
+
 
 static void axis_is_at_home(int axis) {
   current_position[axis] = base_home_pos(axis) + add_homeing[axis];
@@ -597,7 +602,7 @@ static void homeaxis(int axis) {
   ((LETTER##_MIN_PIN > -1 && LETTER##_HOME_DIR==-1) || (LETTER##_MAX_PIN > -1 && LETTER##_HOME_DIR==1))
 #define plan_set_position
   //Since we only have z steppers, just home z axis -- also need to account for second Z...! 
-  if (axis==RZ_AXIS ? HOMEAXIS_DO(Z) :
+  if (axis==RZ_AXIS ? HOMEAXIS_DO(RZ) :
       0) {
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
@@ -686,7 +691,7 @@ void process_commands()
         destination[Y_AXIS]=current_position[Y_AXIS];
         destination[RZ_AXIS]=current_position[RZ_AXIS]; 
         current_position[RZ_AXIS]+=-retract_zlift;
-        destination[LZ_AXIS]=current_position[LZ_AXIS]-retract_length; 
+        destination[LZ_AXIS]=current_position[LZ_AXIS]+=-retract_zlift; 
         feedrate=retract_feedrate;
         retracted=true;
         prepare_move();
@@ -699,7 +704,7 @@ void process_commands()
         destination[X_AXIS]=current_position[X_AXIS];
         destination[Y_AXIS]=current_position[Y_AXIS];
         destination[RZ_AXIS]=current_position[RZ_AXIS]; 
-        
+        destination[LZ_AXIS]=current_position[LZ_AXIS];
         current_position[RZ_AXIS]+=retract_zlift;
         current_position[LZ_AXIS]+=-retract_recover_length; 
         feedrate=retract_recover_feedrate;
@@ -1037,7 +1042,7 @@ void process_commands()
             float value = code_value();
             if(value < 20.0) {
               float factor = axis_steps_per_unit[i] / value; // increase e constants if M92 E14 is given for netfab.
-              max_e_jerk *= factor;
+              max_lz_jerk *= factor;
               max_feedrate[i] *= factor;
               axis_steps_per_sqr_second[i] *= factor;
             }
@@ -1099,13 +1104,13 @@ void process_commands()
         SERIAL_PROTOCOLPGM(MSG_Y_MAX);
         SERIAL_PROTOCOLLN(((READ(Y_MAX_PIN)^Y_ENDSTOPS_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
-      #if (Z_MIN_PIN > -1)
+      #if (RZ_MIN_PIN > -1)
         SERIAL_PROTOCOLPGM(MSG_Z_MIN);
-        SERIAL_PROTOCOLLN(((READ(Z_MIN_PIN)^Z_ENDSTOPS_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+        SERIAL_PROTOCOLLN(((READ(RZ_MIN_PIN)^Z_ENDSTOPS_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
-      #if (Z_MAX_PIN > -1)
+      #if (RZ_MAX_PIN > -1)
         SERIAL_PROTOCOLPGM(MSG_Z_MAX);
-        SERIAL_PROTOCOLLN(((READ(Z_MAX_PIN)^Z_ENDSTOPS_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
+        SERIAL_PROTOCOLLN(((READ(RZ_MAX_PIN)^Z_ENDSTOPS_INVERTING)?MSG_ENDSTOP_HIT:MSG_ENDSTOP_OPEN));
       #endif
       break;
       //TODO: update for all axis, use for loop
@@ -1143,8 +1148,8 @@ void process_commands()
       if(code_seen('T')) mintravelfeedrate = code_value();
       if(code_seen('B')) minsegmenttime = code_value() ;
       if(code_seen('X')) max_xy_jerk = code_value() ;
-      if(code_seen('Z')) max_z_jerk = code_value() ;
-      if(code_seen('E')) max_e_jerk = code_value() ;
+      if(code_seen('RZ')) max_rz_jerk = code_value() ;
+      if(code_seen('LZ')) max_lz_jerk = code_value() ;
     }
     break;
     case 206: // M206 additional homeing offset
@@ -1338,7 +1343,7 @@ void get_coordinates()
   
   #ifdef FWRETRACT
   if(autoretract_enabled)
-  if( !(seen[X_AXIS] || seen[Y_AXIS] || seen[RZ_AXIS]) && seen[LZ_AXIS])
+  if( !(seen[X_AXIS] || seen[Y_AXIS] || seen[RZ_AXIS]) || seen[LZ_AXIS])
   {
     float echange=destination[LZ_AXIS]-current_position[LZ_AXIS];
     if(echange<-MIN_RETRACT) //retract
@@ -1350,7 +1355,7 @@ void get_coordinates()
       //if slicer retracted by echange=-1mm and you want to retract 3mm, corrrectede=-2mm additionally
       float correctede=-echange-retract_length;
       //to generate the additional steps, not the destination is changed, but inversely the current position
-      current_position[LZ_AXIS]+=-correctede; 
+      current_position[LZ_AXIS]+=-retract_zlift; 
       feedrate=retract_feedrate;
       retracted=true;
       }
@@ -1412,6 +1417,8 @@ void clamp_to_software_endstops(float target[3])
     if (target[X_AXIS] > max_pos[X_AXIS]) target[X_AXIS] = max_pos[X_AXIS];
     if (target[Y_AXIS] > max_pos[Y_AXIS]) target[Y_AXIS] = max_pos[Y_AXIS];
     if (target[RZ_AXIS] > max_pos[RZ_AXIS]) target[RZ_AXIS] = max_pos[RZ_AXIS];
+    if (target[LZ_AXIS] > max_pos[LZ_AXIS]) target[LZ_AXIS] = max_pos[LZ_AXIS];
+    
   }
 }
 

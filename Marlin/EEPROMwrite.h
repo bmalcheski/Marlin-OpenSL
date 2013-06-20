@@ -52,8 +52,8 @@ inline void EEPROM_StoreSettings()
   EEPROM_writeAnything(i,mintravelfeedrate);
   EEPROM_writeAnything(i,minsegmenttime);
   EEPROM_writeAnything(i,max_xy_jerk);
-  EEPROM_writeAnything(i,max_z_jerk);
-  EEPROM_writeAnything(i,max_e_jerk);
+  EEPROM_writeAnything(i,max_rz_jerk);
+  EEPROM_writeAnything(i,max_lz_jerk);
   EEPROM_writeAnything(i,add_homeing);
   
   char ver2[4]=EEPROM_VERSION;
@@ -73,8 +73,8 @@ inline void EEPROM_printSettings()
       SERIAL_ECHO_START;
       SERIAL_ECHOPAIR("  M92 X",axis_steps_per_unit[0]);
       SERIAL_ECHOPAIR(" Y",axis_steps_per_unit[1]);
-      SERIAL_ECHOPAIR(" Z",axis_steps_per_unit[2]);
-      SERIAL_ECHOPAIR(" E",axis_steps_per_unit[3]);
+      SERIAL_ECHOPAIR(" RZ",axis_steps_per_unit[2]);
+      SERIAL_ECHOPAIR(" LZ",axis_steps_per_unit[3]);
       SERIAL_ECHOLN("");
       
     SERIAL_ECHO_START;
@@ -82,16 +82,16 @@ inline void EEPROM_printSettings()
       SERIAL_ECHO_START;
       SERIAL_ECHOPAIR("  M203 X",max_feedrate[0]);
       SERIAL_ECHOPAIR(" Y",max_feedrate[1] ); 
-      SERIAL_ECHOPAIR(" Z", max_feedrate[2] ); 
-      SERIAL_ECHOPAIR(" E", max_feedrate[3]);
+      SERIAL_ECHOPAIR(" RZ", max_feedrate[2] ); 
+      SERIAL_ECHOPAIR(" LZ", max_feedrate[3]);
       SERIAL_ECHOLN("");
     SERIAL_ECHO_START;
       SERIAL_ECHOLNPGM("Maximum Acceleration (mm/s2):");
       SERIAL_ECHO_START;
       SERIAL_ECHOPAIR("  M201 X" ,max_acceleration_units_per_sq_second[0] ); 
       SERIAL_ECHOPAIR(" Y" , max_acceleration_units_per_sq_second[1] ); 
-      SERIAL_ECHOPAIR(" Z" ,max_acceleration_units_per_sq_second[2] );
-      SERIAL_ECHOPAIR(" E" ,max_acceleration_units_per_sq_second[3]);
+      SERIAL_ECHOPAIR(" RZ" ,max_acceleration_units_per_sq_second[2] );
+      SERIAL_ECHOPAIR(" LZ" ,max_acceleration_units_per_sq_second[3]);
       SERIAL_ECHOLN("");
     SERIAL_ECHO_START;
       SERIAL_ECHOLNPGM("Acceleration: S=acceleration, T=retract acceleration");
@@ -106,15 +106,16 @@ inline void EEPROM_printSettings()
       SERIAL_ECHOPAIR(" T" ,mintravelfeedrate ); 
       SERIAL_ECHOPAIR(" B" ,minsegmenttime ); 
       SERIAL_ECHOPAIR(" X" ,max_xy_jerk ); 
-      SERIAL_ECHOPAIR(" Z" ,max_z_jerk);
-      SERIAL_ECHOPAIR(" E" ,max_e_jerk);
+      SERIAL_ECHOPAIR(" RZ" ,max_rz_jerk);
+      SERIAL_ECHOPAIR(" LZ" ,max_lz_jerk);
       SERIAL_ECHOLN(""); 
     SERIAL_ECHO_START;
       SERIAL_ECHOLNPGM("Home offset (mm):");
       SERIAL_ECHO_START;
       SERIAL_ECHOPAIR("  M206 X",add_homeing[0] );
       SERIAL_ECHOPAIR(" Y" ,add_homeing[1] );
-      SERIAL_ECHOPAIR(" Z" ,add_homeing[2] );
+      SERIAL_ECHOPAIR(" RZ" ,add_homeing[2] );
+      SERIAL_ECHOPAIR(" LZ" ,add_homeing[3] );
       SERIAL_ECHOLN("");
 //  #endif
 } 
@@ -139,8 +140,8 @@ inline void EEPROM_RetrieveSettings(bool def=false)
       EEPROM_readAnything(i,mintravelfeedrate);
       EEPROM_readAnything(i,minsegmenttime);
       EEPROM_readAnything(i,max_xy_jerk);
-      EEPROM_readAnything(i,max_z_jerk);
-      EEPROM_readAnything(i,max_e_jerk);
+      EEPROM_readAnything(i,max_rz_jerk);
+      EEPROM_readAnything(i,max_lz_jerk);
       EEPROM_readAnything(i,add_homeing);
       SERIAL_ECHO_START;
       SERIAL_ECHOLNPGM("Stored settings retreived:");
@@ -158,13 +159,14 @@ inline void EEPROM_RetrieveSettings(bool def=false)
         max_acceleration_units_per_sq_second[i]=tmp3[i];
       }
       acceleration=DEFAULT_ACCELERATION;
-      retract_acceleration=DEFAULT_RETRACT_ACCELERATION;
+//      retract_acceleration=DEFAULT_RETRACT_ACCELERATION;
       minimumfeedrate=DEFAULT_MINIMUMFEEDRATE;
       minsegmenttime=DEFAULT_MINSEGMENTTIME;       
       mintravelfeedrate=DEFAULT_MINTRAVELFEEDRATE;
       max_xy_jerk=DEFAULT_XYJERK;
-      max_z_jerk=DEFAULT_ZJERK;
-      add_homeing[0] = add_homeing[1] = add_homeing[2] = 0;
+      max_rz_jerk=DEFAULT_RZJERK;
+      max_lz_jerk=DEFAULT_LZJERK;
+      add_homeing[0] = add_homeing[1] = add_homeing[2] = add_homeing[3] = 0;
       SERIAL_ECHO_START;
       SERIAL_ECHOLN("Using Default settings:");
     }

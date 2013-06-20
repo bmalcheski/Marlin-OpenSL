@@ -175,9 +175,9 @@ void setPwmFrequency(uint8_t pin, int val);
 extern float homing_feedrate[];
 extern bool axis_relative_modes[];
 extern float current_position[NUM_AXIS] ;
-extern float add_homeing[3];
-extern float min_pos[3];
-extern float max_pos[3];
+extern float add_homeing[4];
+extern float min_pos[4];
+extern float max_pos[4];
 extern unsigned char FanSpeed;
 extern unsigned char LaserPower;
 

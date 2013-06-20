@@ -34,7 +34,9 @@
 #ifdef MANUAL_HOME_POSITION  //Use manual limit switch locations
   #define X_HOME_POS MANUAL_X_HOME_POS
   #define Y_HOME_POS MANUAL_Y_HOME_POS
-  #define Z_HOME_POS MANUAL_Z_HOME_POS
+  #define RZ_HOME_POS MANUAL_RZ_HOME_POS
+  #define LZ_HOME_POS MANUAL_LZ_HOME_POS
+  
 #else //Set min/max homing switch positions based upon homing direction and min/max travel limits
   //X axis
   #if X_HOME_DIR == -1
@@ -67,10 +69,16 @@
   #endif //Y_HOME_DIR == -1
   
   // Z axis
-  #if Z_HOME_DIR == -1 //BED_CENTER_AT_0_0 not used
-    #define Z_HOME_POS Z_MIN_POS
+  #if RZ_HOME_DIR == -1 //BED_CENTER_AT_0_0 not used
+    #define RZ_HOME_POS RZ_MIN_POS
   #else    
-    #define Z_HOME_POS Z_MAX_POS
+    #define RZ_HOME_POS RZ_MAX_POS
+  #endif //Z_HOME_DIR == -1
+  
+  #if LZ_HOME_DIR == -1 //BED_CENTER_AT_0_0 not used
+    #define LZ_HOME_POS LZ_MIN_POS
+  #else    
+    #define LZ_HOME_POS LZ_MAX_POS
   #endif //Z_HOME_DIR == -1
 #endif //End auto min/max positions
 //END AUTOSET LOCATIONS OF LIMIT SWITCHES -ZP
@@ -93,7 +101,9 @@
 //homing hits the endstop, then retracts by this distance, before it tries to slowly bump again:
 #define X_HOME_RETRACT_MM 5 
 #define Y_HOME_RETRACT_MM 5 
-#define Z_HOME_RETRACT_MM 1 
+#define RZ_HOME_RETRACT_MM 1
+#define LZ_HOME_RETRACT_MM 1
+
 //#define QUICK_HOME  //if this is defined, if both x and y are to be homed, a diagonal move will be performed initially.
 
 #define AXIS_RELATIVE_MODES {false, false, false, false}

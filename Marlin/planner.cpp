@@ -68,8 +68,8 @@ float minimumfeedrate;
 float acceleration;         // Normal acceleration mm/s^2  THIS IS THE DEFAULT ACCELERATION for all moves. M204 SXXXX
 float retract_acceleration; //  mm/s^2   filament pull-pack and push-forward  while standing still in the other axis M204 TXXXX
 float max_xy_jerk; //speed than can be stopped at once, if i understand correctly.
-float max_z_jerk;
-float max_e_jerk;
+float max_rz_jerk;
+float max_lz_jerk;
 float mintravelfeedrate;
 unsigned long axis_steps_per_sqr_second[NUM_AXIS];
 
@@ -676,10 +676,10 @@ void plan_buffer_line(const float &x, const float &y, const float &rz, const flo
   // Start with a safe speed
   float vmax_junction = max_xy_jerk/2; 
   float vmax_junction_factor = 1.0; 
-  if(fabs(current_speed[RZ_AXIS]) > max_z_jerk/2) 
-    vmax_junction = min(vmax_junction, max_z_jerk/2);
-  if(fabs(current_speed[LZ_AXIS]) > max_e_jerk/2) 
-    vmax_junction = min(vmax_junction, max_e_jerk/2);
+  if(fabs(current_speed[RZ_AXIS]) > max_rz_jerk/2) 
+    vmax_junction = min(vmax_junction, max_rz_jerk/2);
+  if(fabs(current_speed[LZ_AXIS]) > max_lz_jerk/2) 
+    vmax_junction = min(vmax_junction, max_lz_jerk/2);
   vmax_junction = min(vmax_junction, block->nominal_speed);
   float safe_speed = vmax_junction;
 
@@ -691,11 +691,11 @@ void plan_buffer_line(const float &x, const float &y, const float &rz, const flo
     if (jerk > max_xy_jerk) {
       vmax_junction_factor = (max_xy_jerk/jerk);
     } 
-    if(fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS]) > max_z_jerk) {
-      vmax_junction_factor= min(vmax_junction_factor, (max_z_jerk/fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS])));
+    if(fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS]) > max_rz_jerk) {
+      vmax_junction_factor= min(vmax_junction_factor, (max_rz_jerk/fabs(current_speed[RZ_AXIS] - previous_speed[RZ_AXIS])));
     } 
-    if(fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS]) > max_e_jerk) {
-      vmax_junction_factor = min(vmax_junction_factor, (max_e_jerk/fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS])));
+    if(fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS]) > max_lz_jerk) {
+      vmax_junction_factor = min(vmax_junction_factor, (max_lz_jerk/fabs(current_speed[LZ_AXIS] - previous_speed[LZ_AXIS])));
     } 
     vmax_junction = min(previous_nominal_speed, vmax_junction * vmax_junction_factor); // Limit speed to max previous speed
   }

@@ -69,7 +69,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define X_ENABLE_ON 0
 #define Y_ENABLE_ON 0
 #define RZ_ENABLE_ON 0
-#define LZ_ENABLE_ON 0 // For all extruders
+#define LZ_ENABLE_ON 0 
 
 // Disables axis when it's not being used.
 #define DISABLE_X false
@@ -86,7 +86,9 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 // Sets direction of endstops when homing; 1=MAX, -1=MIN
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
-#define Z_HOME_DIR -1
+#define RZ_HOME_DIR -1
+#define LZ_HOME_DIR -1
+
 
 #define min_software_endstops false //If true, axis won't move to coordinates less than HOME_POS.
 #define max_software_endstops false  //If true, axis won't move to coordinates greater than the defined lengths below.
@@ -95,12 +97,15 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define X_MIN_POS 0
 #define Y_MAX_POS 100 //205
 #define Y_MIN_POS 0
-#define Z_MAX_POS 180
-#define Z_MIN_POS 0
+#define RZ_MAX_POS 180
+#define RZ_MIN_POS 0
+#define LZ_MAX_POS 180
+#define LZ_MIN_POS 0
 
 #define X_MAX_LENGTH (X_MAX_POS - X_MIN_POS)
 #define Y_MAX_LENGTH (Y_MAX_POS - Y_MIN_POS)
-#define Z_MAX_LENGTH (Z_MAX_POS - Z_MIN_POS)
+#define RZ_MAX_LENGTH (RZ_MAX_POS - RZ_MIN_POS)
+#define LZ_MAX_LENGTH (LZ_MAX_POS - LZ_MIN_POS)
 
 // The position of the homing switches
 #define MANUAL_HOME_POSITIONS  // If defined, manualy programed locations will be used
@@ -109,10 +114,12 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 //Manual homing switch locations:
 #define MANUAL_X_HOME_POS 0
 #define MANUAL_Y_HOME_POS 0
-#define MANUAL_Z_HOME_POS 0
+#define MANUAL_RZ_HOME_POS 0
+#define MANUAL_LZ_HOME_POS 0
+
 
 //// MOVEMENT SETTINGS
-#define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, RZ, LZ (E)
+#define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, RZ, LZ
 #define HOMING_FEEDRATE {50*60, 50*60, 180, 180}  // set the homing speeds (mm/min)
 
 // default settings 
@@ -122,11 +129,13 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define DEFAULT_MAX_ACCELERATION      {12000,12000,4,4}    // X, Y, RZ, LZ maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
 #define DEFAULT_ACCELERATION          5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for printing moves 3000 for steel bearings
-#define DEFAULT_RETRACT_ACCELERATION  5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for r retracts 3000 for steel bearings
+//#define DEFAULT__ACCELERATION  5000    // X, Y, RZ and LZ max acceleration in mm/s^2 for r retracts 3000 for steel bearings
 
 // 
 #define DEFAULT_XYJERK                300.0    // (mm/sec) 20 for steel bearings
-#define DEFAULT_ZJERK                 0.4     // (mm/sec)
+#define DEFAULT_RZJERK                 0.4     // (mm/sec)
+#define DEFAULT_LZJERK                 0.4     // (mm/sec)
+
 
 //===========================================================================
 //=============================Additional Features===========================

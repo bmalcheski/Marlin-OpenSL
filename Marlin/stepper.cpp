@@ -345,7 +345,7 @@ ISR(TIMER1_COMPA_vect)
       CHECK_ENDSTOPS
       {
         #if Z_MIN_PIN > -1
-          bool z_min_endstop=(READ(Z_MIN_PIN) != Z_ENDSTOPS_INVERTING);
+          bool z_min_endstop=(READ(RZ_MIN_PIN) != Z_ENDSTOPS_INVERTING);
           if(z_min_endstop && old_z_min_endstop && (current_block->steps_rz > 0)) {
             endstops_trigsteps[RZ_AXIS] = count_position[RZ_AXIS];
             endstop_z_hit=true;
@@ -615,9 +615,9 @@ void st_init()
   //endstops and pullups
   
     #if Z_MIN_PIN > -1
-      SET_INPUT(Z_MIN_PIN); 
+      SET_INPUT(RZ_MIN_PIN); 
     #ifdef ENDSTOPPULLUP_ZMIN
-      WRITE(Z_MIN_PIN,HIGH);
+      WRITE(RZ_MIN_PIN,HIGH);
     #endif
     #endif
       
