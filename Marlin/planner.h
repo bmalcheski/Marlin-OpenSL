@@ -36,7 +36,7 @@ typedef struct {
   long decelerate_after;                    // The index of the step event on which to start decelerating
   long acceleration_rate;                   // The acceleration rate used for acceleration calculation
   unsigned char direction_bits;             // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
-  unsigned char active_extruder;            // Selects the active extruder
+//  unsigned char active_extruder;            // Selects the active extruder
   #ifdef ADVANCE
     long advance_rate;
     volatile long initial_advance;
@@ -69,11 +69,11 @@ void plan_init();
 
 // Add a new linear movement to the buffer. x, y and z is the signed, absolute target position in 
 // millimaters. Feed rate specifies the speed of the motion.
-void plan_buffer_line(const float &x, const float &y, const float &z, const float &e, float feed_rate, const uint8_t &extruder);
+void plan_buffer_line(const float &x, const float &y, const float &rz, const float &lz, float feed_rate);
 
 // Set position. Used for G92 instructions.
-void plan_set_position(const float &x, const float &y, const float &z, const float &e);
-void plan_set_e_position(const float &e);
+void plan_set_position(const float &x, const float &y, const float &rz, const float &lz, float feed_rate);
+//void plan_set_e_position(const float &e);
 
 
 

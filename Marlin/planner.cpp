@@ -450,7 +450,7 @@ float junction_deviation = 0.1;
 // Add a new linear movement to the buffer. steps_x, _y and _z is the absolute position in 
 // mm. Microseconds specify how many microseconds the move should take to perform. To aid acceleration
 // calculation the caller must also provide the physical length of the line in millimeters.
-void plan_buffer_line(const float &x, const float &y, const float &z, const float &e, float feed_rate, const uint8_t &extruder)
+void plan_buffer_line(const float &x, const float &y, const float &rz, const float &lz, float feed_rate)
 {
   // Calculate the buffer head after we push this byte
   int next_buffer_head = next_block_index(block_buffer_head);
@@ -467,8 +467,8 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   long target[4];
   target[X_AXIS] = lround(x*axis_steps_per_unit[X_AXIS]);
   target[Y_AXIS] = lround(y*axis_steps_per_unit[Y_AXIS]);
-  target[RZ_AXIS] = lround(z*axis_steps_per_unit[RZ_AXIS]);     
-  target[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);
+  target[RZ_AXIS] = lround(rz*axis_steps_per_unit[RZ_AXIS]);     
+  target[LZ_AXIS] = lround(lz*axis_steps_per_unit[LZ_AXIS]);
   
   // Prepare to set up new block
   block_t *block = &block_buffer[block_buffer_head];
@@ -506,7 +506,7 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
     block->direction_bits |= (1<<LZ_AXIS); 
   }
 
-  block->active_extruder = extruder;
+
 
   //enable active axes
   if(block->steps_x != 0) enable_x();
@@ -767,12 +767,12 @@ void plan_buffer_line(const float &x, const float &y, const float &z, const floa
   st_wake_up();
 }
 
-void plan_set_position(const float &x, const float &y, const float &z, const float &e)
+void plan_set_position(const float &x, const float &y, const float &rz, const float &lz, float feed_rate)
 {
   position[X_AXIS] = lround(x*axis_steps_per_unit[X_AXIS]);
   position[Y_AXIS] = lround(y*axis_steps_per_unit[Y_AXIS]);
-  position[RZ_AXIS] = lround(z*axis_steps_per_unit[RZ_AXIS]);     
-  position[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);  
+  position[RZ_AXIS] = lround(rz*axis_steps_per_unit[RZ_AXIS]);     
+  position[LZ_AXIS] = lround(lz*axis_steps_per_unit[LZ_AXIS]);  
   st_set_position(position[X_AXIS], position[Y_AXIS], position[RZ_AXIS], position[LZ_AXIS]);
   previous_nominal_speed = 0.0; // Resets planner junction speeds. Assumes start from rest.
   previous_speed[0] = 0.0;
@@ -781,21 +781,10 @@ void plan_set_position(const float &x, const float &y, const float &z, const flo
   previous_speed[3] = 0.0;
 }
 
-void plan_set_e_position(const float &e)
-{
-  position[LZ_AXIS] = lround(e*axis_steps_per_unit[LZ_AXIS]);  
-  st_set_e_position(position[LZ_AXIS]);
-}
+
 
 uint8_t movesplanned()
 {
   return (block_buffer_head-block_buffer_tail + BLOCK_BUFFER_SIZE) & (BLOCK_BUFFER_SIZE - 1);
-}
-
-void allow_cold_extrudes(bool allow)
-{
-#ifdef PREVENT_DANGEROUS_EXTRUDE
-  allow_cold_extrude=allow;
-#endif
 }
 

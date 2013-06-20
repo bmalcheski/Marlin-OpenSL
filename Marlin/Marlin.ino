@@ -49,7 +49,7 @@
 //Implemented Codes
 //-------------------
 // G0  -> G1
-// G1  - Coordinated Movement X Y Z E
+// G1  - Coordinated Movement X Y RZ LZ
 // G2  - CW ARC
 // G3  - CCW ARC
 // G4  - Dwell S<seconds> or P<milliseconds>
@@ -138,7 +138,7 @@ float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
 float add_homeing[3]={0,0,0};
 float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
-uint8_t active_extruder = 0;
+//uint8_t active_extruder = 0; Removing E ties
 unsigned char FanSpeed=0;
 unsigned char LaserPower=0;
 
@@ -152,7 +152,7 @@ unsigned char LaserPower=0;
 //===========================================================================
 //=============================private variables=============================
 //===========================================================================
-const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
+const char axis_codes[NUM_AXIS] = {'X', 'Y', 'RZ', 'LZ'};
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
 static bool home_all_axis = true;
@@ -160,7 +160,7 @@ static float feedrate = 1500.0, next_feedrate, saved_feedrate;
 static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
 
 static bool relative_mode = false;  //Determines Absolute or Relative Coordinates
-static bool relative_mode_e = false;  //Determines Absolute or Relative E Codes while in Absolute Coordinates mode. E is always relative in Relative Coordinates mode.
+//static bool relative_mode_e = false;  //Determines Absolute or Relative E Codes while in Absolute Coordinates mode. E is always relative in Relative Coordinates mode. Removing E ties
 
 static char cmdbuffer[BUFSIZE][MAX_CMD_SIZE];
 static bool fromsd[BUFSIZE];
@@ -171,7 +171,7 @@ static int buflen = 0;
 static char serial_char;
 static int serial_count = 0;
 static boolean comment_mode = false;
-static char *strchr_pointer; // just a pointer to find chars in the cmd string like X, Y, Z, E, etc
+static char *strchr_pointer; // just a pointer to find chars in the cmd string like X, Y, R, E, etc
 
 const int sensitive_pins[] = SENSITIVE_PINS; // Sensitive pin list for M42
 
@@ -186,7 +186,7 @@ static unsigned long stepper_inactive_time = DEFAULT_STEPPER_DEACTIVE_TIME*1000l
 static unsigned long starttime=0;
 static unsigned long stoptime=0;
 
-static uint8_t tmp_extruder;
+//static uint8_t tmp_extruder; Removing E ties
 
 
 bool Stopped=false;
@@ -595,15 +595,15 @@ static void axis_is_at_home(int axis) {
 static void homeaxis(int axis) {
 #define HOMEAXIS_DO(LETTER) \
   ((LETTER##_MIN_PIN > -1 && LETTER##_HOME_DIR==-1) || (LETTER##_MAX_PIN > -1 && LETTER##_HOME_DIR==1))
-
-  //Since we only have z steppers, just home z axis -- also need to account for second Z...!
+#define plan_set_position
+  //Since we only have z steppers, just home z axis -- also need to account for second Z...! 
   if (axis==RZ_AXIS ? HOMEAXIS_DO(Z) :
       0) {
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
     destination[axis] = 1.5 * max_length(axis) * home_dir(axis);
     feedrate = homing_feedrate[axis];
-    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[RZ_AXIS], feedrate/60, active_extruder);
+    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60);
     st_synchronize();
     
     current_position[LZ_AXIS] = current_position[RZ_AXIS];
@@ -611,14 +611,14 @@ static void homeaxis(int axis) {
     current_position[axis] = 0;
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
     destination[axis] = -home_retract_mm(axis) * home_dir(axis);
-    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[RZ_AXIS], feedrate/60, active_extruder);
+    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60);
     st_synchronize();
     
     current_position[LZ_AXIS] = current_position[RZ_AXIS];
    
     destination[axis] = 2*home_retract_mm(axis) * home_dir(axis);
     feedrate = homing_feedrate[axis]/2 ; 
-    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[RZ_AXIS], feedrate/60, active_extruder);
+    plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60);
     st_synchronize();
     
     current_position[LZ_AXIS] = current_position[RZ_AXIS];
@@ -738,7 +738,7 @@ void process_commands()
         feedrate = homing_feedrate[X_AXIS]; 
         if(homing_feedrate[Y_AXIS]<feedrate)
           feedrate =homing_feedrate[Y_AXIS]; 
-        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60, active_extruder);
+        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60);
         st_synchronize();
     
         axis_is_at_home(X_AXIS);
@@ -746,7 +746,7 @@ void process_commands()
         plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
         destination[X_AXIS] = current_position[X_AXIS];
         destination[Y_AXIS] = current_position[Y_AXIS];
-        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60, active_extruder);
+        plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60);
         feedrate = 0.0;
         st_synchronize();
         endstops_hit_on_purpose();
@@ -810,7 +810,7 @@ void process_commands()
         if(code_seen(axis_codes[i])) { 
            if(i == LZ_AXIS) {
              current_position[i] = code_value();  
-             plan_set_e_position(current_position[LZ_AXIS]);
+             plan_set_position(current_position[LZ_AXIS]);
            }
            else {
              current_position[i] = code_value()+add_homeing[i];  
@@ -1267,23 +1267,7 @@ void process_commands()
     }
   }
 
-  else if(code_seen('T')) 
-  {
-    tmp_extruder = code_value();
-    if(tmp_extruder >= EXTRUDERS) {
-      SERIAL_ECHO_START;
-      SERIAL_ECHO("T");
-      SERIAL_ECHO(tmp_extruder);
-      SERIAL_ECHOLN(MSG_INVALID_EXTRUDER);
-    }
-    else {
-      active_extruder = tmp_extruder;
-      SERIAL_ECHO_START;
-      SERIAL_ECHO(MSG_ACTIVE_EXTRUDER);
-      SERIAL_PROTOCOLLN((int)active_extruder);
-    }
-  }
-
+  
   else
   {
     SERIAL_ECHO_START;
@@ -1421,6 +1405,7 @@ void clamp_to_software_endstops(float target[3])
     if (target[X_AXIS] < min_pos[X_AXIS]) target[X_AXIS] = min_pos[X_AXIS];
     if (target[Y_AXIS] < min_pos[Y_AXIS]) target[Y_AXIS] = min_pos[Y_AXIS];
     if (target[RZ_AXIS] < min_pos[RZ_AXIS]) target[RZ_AXIS] = min_pos[RZ_AXIS];
+    if (target[LZ_AXIS] < min_pos[LZ_AXIS]) target[LZ_AXIS] = min_pos[LZ_AXIS]; //BM
   }
 
   if (max_software_endstops) {
@@ -1437,10 +1422,10 @@ void prepare_move()
   previous_millis_cmd = millis();  
   // Do not use feedmultiply for E or Z only moves
   if( (current_position[X_AXIS] == destination [X_AXIS]) && (current_position[Y_AXIS] == destination [Y_AXIS])) {
-      plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate/60, active_extruder);
+      plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate);
   }
   else {
-  plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate*feedmultiply/60/100.0, active_extruder);
+  plan_buffer_line(destination[X_AXIS], destination[Y_AXIS], destination[RZ_AXIS], destination[LZ_AXIS], feedrate);
   }
   for(int8_t i=0; i < NUM_AXIS; i++) {
     current_position[i] = destination[i];
@@ -1451,7 +1436,7 @@ void prepare_arc_move(char isclockwise) {
   float r = hypot(offset[X_AXIS], offset[Y_AXIS]); // Compute arc radius for mc_arc
 
   // Trace the arc
-  mc_arc(current_position, destination, offset, X_AXIS, Y_AXIS, RZ_AXIS, feedrate*feedmultiply/60/100.0, r, isclockwise, active_extruder);
+  mc_arc(current_position, destination, offset, X_AXIS, Y_AXIS, RZ_AXIS, LZ_AXIS, r, isclockwise);
   
   // As far as the parser is concerned, the position is now == target. In reality the
   // motion control system might still be processing the action and the real tool position
@@ -1623,26 +1608,3 @@ void setPwmFrequency(uint8_t pin, int val)
 }
 #endif //FAST_PWM_FAN
 
-bool setTargetedHotend(int code){
-  tmp_extruder = active_extruder;
-  if(code_seen('T')) {
-    tmp_extruder = code_value();
-    if(tmp_extruder >= EXTRUDERS) {
-      SERIAL_ECHO_START;
-      switch(code){
-        case 104:
-          SERIAL_ECHO(MSG_M104_INVALID_EXTRUDER);
-          break;
-        case 105:
-          SERIAL_ECHO(MSG_M105_INVALID_EXTRUDER);
-          break;
-        case 109:
-          SERIAL_ECHO(MSG_M109_INVALID_EXTRUDER);
-          break;
-      }
-      SERIAL_ECHOLN(tmp_extruder);
-      return true;
-    }
-  }
-  return false;
-}
