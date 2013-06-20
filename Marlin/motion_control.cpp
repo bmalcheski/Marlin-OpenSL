@@ -25,8 +25,8 @@
 
 // The arc is approximated by generating a huge number of tiny, linear segments. The length of each 
 // segment is configured in settings.mm_per_arc_segment.  
-void mc_arc(float *position, float *target, float *offset, uint8_t axis_0, uint8_t axis_1, 
-  uint8_t axis_linear, float feed_rate, float radius, uint8_t isclockwise, uint8_t axis_3, uint8_t axis_4)
+void mc_arc(float *position, float *target, float *offset, uint8_t axis_0, uint8_t axis_1, uint8_t axis_2,
+  uint8_t axis_linear, float feed_rate, float radius, uint8_t isclockwise)
 {      
   //   int acceleration_manager_was_enabled = plan_is_acceleration_manager_enabled();
   //   plan_set_acceleration_manager_enabled(false); // disable acceleration management for the duration of the arc
