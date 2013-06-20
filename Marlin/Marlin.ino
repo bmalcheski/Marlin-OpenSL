@@ -773,7 +773,7 @@ void process_commands()
       }
       #endif
       
-      if LZ_HOME_DIR < 0
+      #if LZ_HOME_DIR < 0
       if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
         HOMEAXIS (LZ);
       }
