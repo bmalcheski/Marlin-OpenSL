@@ -689,9 +689,10 @@ void process_commands()
       {
         destination[X_AXIS]=current_position[X_AXIS];
         destination[Y_AXIS]=current_position[Y_AXIS];
-        destination[RZ_AXIS]=current_position[RZ_AXIS]; 
+        destination[RZ_AXIS]=current_position[RZ_AXIS];
+        destination[LZ_AXIS]=current_postion[LZ_AXIS];
         current_position[RZ_AXIS]+=-retract_zlift;
-        destination[LZ_AXIS]=current_position[LZ_AXIS]+=-retract_zlift; 
+        current_position[LZ_AXIS]+=-retract_zlift; 
         feedrate=retract_feedrate;
         retracted=true;
         prepare_move();
@@ -725,7 +726,7 @@ void process_commands()
         destination[i] = current_position[i];
       }
       feedrate = 0.0;
-      home_all_axis = !((code_seen(axis_codes[0])) || (code_seen(axis_codes[1])) || (code_seen(axis_codes[2])));
+      home_all_axis = !((code_seen(axis_codes[0])) || (code_seen(axis_codes[1])) || (code_seen(axis_codes[2])) || (code_seen(axis_codes[3])));
       
 //      #if Z_HOME_DIR > 0                      // If homing away from BED do Z first OpenSL homes at "bed"
 //      if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
@@ -774,7 +775,7 @@ void process_commands()
       #endif
       
       #if LZ_HOME_DIR < 0
-      if((home_all_axis) || (code_seen(axis_codes[RZ_AXIS]))) {
+      if((home_all_axis) || (code_seen(axis_codes[LZ_AXIS]))) {
         HOMEAXIS (LZ);
       }
       #endif
@@ -823,7 +824,7 @@ void process_commands()
       relative_mode = true;
       break;
     case 92: // G92
-      if(!code_seen(axis_codes[LZ_AXIS]))
+      if(!code_seen(axis_codes[RZ_AXIS || LZ_AXIS])) //Originall (axis_codes[LZ_AXIS]))
         st_synchronize();
       for(int8_t i=0; i < NUM_AXIS; i++) {
         if(code_seen(axis_codes[i])) { 
