@@ -1436,7 +1436,7 @@ void prepare_arc_move(char isclockwise) {
   float r = hypot(offset[X_AXIS], offset[Y_AXIS]); // Compute arc radius for mc_arc
 
   // Trace the arc
-  mc_arc(current_position, destination, offset, X_AXIS, Y_AXIS, RZ_AXIS, LZ_AXIS, r, isclockwise);
+  mc_arc(current_position, destination, offset, X_AXIS, Y_AXIS, RZ_AXIS, LZ_AXIS, feedrate*feedmultiply/60/100.0, r, isclockwise);
   
   // As far as the parser is concerned, the position is now == target. In reality the
   // motion control system might still be processing the action and the real tool position
