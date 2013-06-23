@@ -1,6 +1,8 @@
 #include "Marlin.h"
 #include "cardreader.h"
+#include "ultralcd.h"
 #include "stepper.h"
+#include "temperature.h"
 #include "language.h"
 
 #ifdef SDSUPPORT
@@ -14,7 +16,10 @@ CardReader::CardReader()
    sdprinting = false;
    cardOK = false;
    saving = false;
+   logging = false;
    autostart_atmillis=0;
+   workDirDepth = 0;
+   memset(workDirParents, 0, sizeof(workDirParents));
 
    autostart_stilltocheck=true; //the sd start is delayed, because otherwise the serial cannot answer fast enought to make contact with the hostsoftware.
    lastnr=0;
@@ -88,6 +93,8 @@ void  CardReader::lsDive(const char *prepend,SdFile parent)
     {
       if (p.name[0] == DIR_NAME_FREE) break;
       if (p.name[0] == DIR_NAME_DELETED || p.name[0] == '.'|| p.name[0] == '_') continue;
+      if (longFilename[0] != '\0' &&
+          (longFilename[0] == '.' || longFilename[0] == '_')) continue;
       if ( p.name[0] == '.')
       {
         if ( p.name[1] != '.')
@@ -141,7 +148,11 @@ void CardReader::initsd()
   cardOK = false;
   if(root.isOpen())
     root.close();
+#ifdef SDSLOW
+  if (!card.init(SPI_HALF_SPEED,SDSS))
+#else
   if (!card.init(SPI_FULL_SPEED,SDSS))
+#endif
   {
     //if (!card.init(SPI_HALF_SPEED,SDSS))
     SERIAL_ECHO_START;
@@ -208,6 +219,11 @@ void CardReader::pauseSDPrint()
 }
 
 
+void CardReader::openLogFile(char* name)
+{
+  logging = true;
+  openFile(name, false);
+}
 
 void CardReader::openFile(char* name,bool read)
 {
@@ -244,7 +260,9 @@ void CardReader::openFile(char* name,bool read)
           return;
         }
         else
-          ;//SERIAL_ECHOLN("dive ok");
+        {
+          //SERIAL_ECHOLN("dive ok");
+        }
           
         curDir=&myDir; 
         dirname_start=dirname_end+1;
@@ -275,6 +293,7 @@ void CardReader::openFile(char* name,bool read)
       sdpos = 0;
       
       SERIAL_PROTOCOLLNPGM(MSG_SD_FILE_SELECTED);
+      lcd_setstatus(fname);
     }
     else
     {
@@ -296,6 +315,7 @@ void CardReader::openFile(char* name,bool read)
       saving = true;
       SERIAL_PROTOCOLPGM(MSG_SD_WRITE_TO_FILE);
       SERIAL_PROTOCOLLN(name);
+      lcd_setstatus(fname);
     }
   }
   
@@ -336,7 +356,9 @@ void CardReader::removeFile(char* name)
           return;
         }
         else
-          ;//SERIAL_ECHOLN("dive ok");
+        {
+          //SERIAL_ECHOLN("dive ok");
+        }
           
         curDir=&myDir; 
         dirname_start=dirname_end+1;
@@ -424,7 +446,7 @@ void CardReader::checkautostart(bool force)
   }
   
   char autoname[30];
-  sprintf(autoname,"auto%i.g",lastnr);
+  sprintf_P(autoname, PSTR("auto%i.g"), lastnr);
   for(int8_t i=0;i<(int8_t)strlen(autoname);i++)
     autoname[i]=tolower(autoname[i]);
   dir_t p;
@@ -444,9 +466,9 @@ void CardReader::checkautostart(bool force)
     {
       char cmd[30];
 
-      sprintf(cmd,"M23 %s",autoname);
+      sprintf_P(cmd, PSTR("M23 %s"), autoname);
       enquecommand(cmd);
-      enquecommand("M24");
+      enquecommand_P(PSTR("M24"));
       found=true;
     }
   }
@@ -461,6 +483,7 @@ void CardReader::closefile()
   file.sync();
   file.close();
   saving = false; 
+  logging = false;
 }
 
 void CardReader::getfilename(const uint8_t nr)
@@ -500,32 +523,39 @@ void CardReader::chdir(const char * relpath)
   }
   else
   {
-    workDirParentParent=workDirParent;
-    workDirParent=*parent;
-    
+    if (workDirDepth < MAX_DIR_DEPTH) {
+      for (int d = ++workDirDepth; d--;)
+        workDirParents[d+1] = workDirParents[d];
+      workDirParents[0]=*parent;
+    }
     workDir=newfile;
   }
 }
 
 void CardReader::updir()
 {
-  if(!workDir.isRoot())
+  if(workDirDepth > 0)
   {
-    workDir=workDirParent;
-    workDirParent=workDirParentParent;
+    --workDirDepth;
+    workDir = workDirParents[0];
+    int d;
+    for (int d = 0; d < workDirDepth; d++)
+      workDirParents[d] = workDirParents[d+1];
   }
 }
 
 
 void CardReader::printingHasFinished()
 {
- st_synchronize();
- quickStop();
- sdprinting = false;
- if(SD_FINISHED_STEPPERRELEASE)
- {
-   //finishAndDisableSteppers();
-   enquecommand(SD_FINISHED_RELEASECOMMAND);
- }
+    st_synchronize();
+    quickStop();
+    file.close();
+    sdprinting = false;
+    if(SD_FINISHED_STEPPERRELEASE)
+    {
+        //finishAndDisableSteppers();
+        enquecommand_P(PSTR(SD_FINISHED_RELEASECOMMAND));
+    }
+    autotempShutdown();
 }
 #endif //SDSUPPORT
