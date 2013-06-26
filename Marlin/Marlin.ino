@@ -600,6 +600,7 @@ static void homeaxis(int axis) {
   if (axis==RZ_AXIS ? HOMEAXIS_DO(Z) :
       0) {
     current_position[axis] = 0;
+    current_position[LZ_AXIS] = current_position[RZ_AXIS];
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[RZ_AXIS], current_position[LZ_AXIS]);
     destination[axis] = 1.5 * max_length(axis) * home_dir(axis);
     feedrate = homing_feedrate[axis];
