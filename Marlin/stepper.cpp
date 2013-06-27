@@ -423,44 +423,7 @@ ISR(TIMER1_COMPA_vect)
       }
       #endif
   
-      #ifdef COREXY
-        counter_x += current_block->steps_x;        
-        counter_y += current_block->steps_y;
-        
-        if ((counter_x > 0)&&!(counter_y>0)){  //X step only
-          counter_x -= current_block->step_event_count; 
-          count_position[X_AXIS]+=count_direction[X_AXIS];   
-          update_X_galvo(count_direction[X_AXIS]);
-          
-        }
-        
-        if (!(counter_x > 0)&&(counter_y>0)){  //Y step only
-          counter_y -= current_block->step_event_count; 
-          count_position[Y_AXIS]+=count_direction[Y_AXIS];
-          update_Y_galvo(count_direction[Y_AXIS]);
-        }        
-        
-        if ((counter_x > 0)&&(counter_y>0)){  //step in both axes
-          if (((out_bits & (1<<X_AXIS)) == 0)^((out_bits & (1<<Y_AXIS)) == 0)){  //X and Y in different directions
-            counter_x -= current_block->step_event_count;  
-            //step_wait();
-            count_position[X_AXIS]+=count_direction[X_AXIS];
-            count_position[Y_AXIS]+=count_direction[Y_AXIS];
-            update_X_galvo(count_direction[X_AXIS]);
-            update_Y_galvo(count_direction[Y_AXIS]);
-            counter_y -= current_block->step_event_count;
-          }
-          else{  //X and Y in same direction
-            counter_x -= current_block->step_event_count;    
-            //step_wait();
-            count_position[X_AXIS]+=count_direction[X_AXIS];
-            count_position[Y_AXIS]+=count_direction[Y_AXIS];
-            update_X_galvo(count_direction[X_AXIS]);
-            update_Y_galvo(count_direction[Y_AXIS]);
-            counter_y -= current_block->step_event_count;    
-          }
-        }
-      #endif //corexy
+      
 
    #else
       //Scanning X&Y With Galvos!

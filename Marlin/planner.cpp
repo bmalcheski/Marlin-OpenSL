@@ -407,12 +407,13 @@ void check_axes_activity() {
     }
 #endif
   }
+  {
   if((DISABLE_X) && (x_active == 0)) disable_x();
   if((DISABLE_Y) && (y_active == 0)) disable_y();
   if((DISABLE_RZ) && (z_active == 0)) disable_rz();
-  if((DISABLE_LZ) && (e_active == 0)) { 
-    disable_lz();
+  if((DISABLE_LZ) && (e_active == 0)) disable_lz();
   }
+  
 #if FAN_PIN > -1
   if((FanSpeed == 0) && (fan_speed ==0)) {
     analogWrite(FAN_PIN, 0);
